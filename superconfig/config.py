@@ -29,7 +29,7 @@ class Config:
         self.layer = layer
 
     def __getitem__(self, key: AnyStr) -> Optional[Any]:
-        status, cont, value = self.layer.get_item(key, self.context)
+        status, cont, value = self.layer.get_item(key, self.context, NullLayer)
         if status == ReadResult.Found:
             return value
         elif status == ReadResult.NotFound:
@@ -38,7 +38,7 @@ class Config:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
     def get(self, key:AnyStr, default:Any=None) -> Optional[Any]:
-        status, cont, value = self.layer.get_item(key, self.context)
+        status, cont, value = self.layer.get_item(key, self.context, NullLayer)
         if status == ReadResult.Found:
             return value
         elif status == ReadResult.NotFound:
@@ -46,12 +46,16 @@ class Config:
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
+class Layer:
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        raise NotImplemented
 
-class DictLayer:
+
+class DictLayer(Layer):
     def __init__(self, data):
         self.data = data
 
-    def get_item(self, key: AnyStr, context: Context) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
         """Gets the value for key or (Found, Go, None) if not found on terminal node."""
         indexes = key.split('.')
         v = self.data
@@ -68,46 +72,54 @@ class DictLayer:
         return ReadResult.Found, Continue.Go, v
 
 
-
-class LayerCake:
+class LayerCake(Layer):
     def __init__(self):
-        self.layers = [NullLayer]
+        self.layers = TerminalLayer
 
     def push(self, layer):
-        self.layers.append(layer)
+        self.layers = LinkedLayer(layer, self.layers)
 
-    def pop(self):
-        if len(self.layers) == 1:
-            raise Exception("no more layers to pop")
-        self.layers = self.layers[:-2]
-
-    def get_item(self, key: AnyStr, context: Context) -> Tuple[int, int, Optional[Any]]:
-        for i in range(len(self.layers)-1, 0, -1):
-            found, cont, v = self.layers[i].get_item(key, context)
-            if found == ReadResult.Found:
-                return found, cont, v
-            if cont == Continue.Stop:
-                return found, cont, v
-        return ReadResult.NotFound, Continue.Go, None
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        return self.layers.get_item(key, context, lower_layer)
 
 
-class NullLayer:
+class LinkedLayer(Layer):
+    def __init__(self, layer, sublayer):
+        self.layer = layer
+        self.sublayer = sublayer
+
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        found, cont, v = self.layer.get_item(key, context, self.sublayer)
+        if found == ReadResult.Found:
+            return found, cont, v
+        if cont == Continue.Stop:
+            return found, cont, v
+        return self.sublayer.get_item(key, context, lower_layer)
+
+
+class TerminalLayer(Layer):
     @classmethod
-    def get_item(cls, key, context):
+    def get_item(cls, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        return lower_layer.get_item(key, context, NullLayer)
+
+
+class NullLayer(Layer):
+    @classmethod
+    def get_item(cls, key, context, lower_layer):
         return ReadResult.NotFound, Continue.Go, None
 
 
-class SmartLayer:
+class SmartLayer(Layer):
     def __init__(self):
         self.getters = {}
 
-    def get_item(self, key: AnyStr, context: Context) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: Context, lower_layer: Layer) -> Tuple[int, int, Optional[Any]]:
         indexes = key.split('.')
-        for i in indexes:
+        for i in range(len(indexes)):
             k = ".".join(indexes[0:i])
             if k not in self.getters:
                 continue
-            found, cont, v = self.getters[k].read(k, indexes[i+1:len(indexes)], context)
+            found, cont, v = self.getters[k].read(k, indexes[i+1:len(indexes)], context, lower_layer)
             if found == ReadResult.Found:
                 return found, cont, v
             if cont == Continue.Stop:
@@ -116,7 +128,7 @@ class SmartLayer:
 
 
 class Getter:
-    def read(self, key, rest, context):
+    def read(self, key, rest, context, lower_layer):
         raise NotImplementedError()
 
 
@@ -124,7 +136,7 @@ class Env(Getter):
     def __init__(self, envar):
         self.envar = envar
 
-    def read(self, key, rest, context):
+    def read(self, key, rest, context, lower_layer):
         if self.envar not in os.environ:
             return ReadResult.NotFound, Continue.Go, None
         return os.environ[self.envar]
@@ -135,8 +147,8 @@ class Transform(Getter):
         self.getter = getter
         self.f = f
 
-    def read(self, key, res, context):
-        found, cont, v = self.getter.read(key, res, context)
+    def read(self, key, res, context, lower_layer):
+        found, cont, v = self.getter.read(key, res, context, lower_layer)
         if found == ReadResult.Found:
             return found, cont, self.f(v)
         return found, cont, v
@@ -146,7 +158,7 @@ class Constant(Getter):
     def __init__(self, c):
         self.c = c
 
-    def read(self, key, res, context):
+    def read(self, key, res, context, lower_layer):
         return ReadResult.Found, Continue.Go, self.c
 
 
@@ -154,9 +166,9 @@ class GetterStack(Getter):
     def __init__(self, getters):
         self.getters = getters
 
-    def read(self, key, res, context):
+    def read(self, key, res, context, lower_layer):
         for g in self.getters:
-            found, cont, v = g.read(key, res, context)
+            found, cont, v = g.read(key, res, context, lower_layer)
             if found == ReadResult.Found:
                 return found, cont, v
             if cont == Continue.Stop:
