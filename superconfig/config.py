@@ -1,6 +1,6 @@
 """Configuration library."""
 import os
-from typing import Any
+from typing import Any, Iterable, Self
 from typing import AnyStr
 from typing import Optional
 from typing import Tuple
@@ -23,8 +23,13 @@ class Context:
     pass
 
 
+class Layer:
+    def get_item(self, key: AnyStr, context: Context, lower_layer: Self) -> Tuple[int, int, Optional[Any]]:
+        raise NotImplemented()
+
+
 class Config:
-    def __init__(self, context, layer):
+    def __init__(self, context: Context, layer: Layer):
         self.context = context
         self.layer = layer
 
@@ -37,7 +42,7 @@ class Config:
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
-    def get(self, key:AnyStr, default:Any=None) -> Optional[Any]:
+    def get(self, key: AnyStr, default: Optional[Any] = None) -> Optional[Any]:
         status, cont, value = self.layer.get_item(key, self.context, NullLayer)
         if status == ReadResult.Found:
             return value
@@ -45,12 +50,6 @@ class Config:
             return default
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
-
-
-class Layer:
-    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
-        raise NotImplemented
-
 
 class DictLayer(Layer):
     def __init__(self, data):
@@ -129,12 +128,12 @@ class SmartLayer(Layer):
 
 
 class Getter:
-    def read(self, key, rest, context, lower_layer):
+    def read(self, key: AnyStr, rest: AnyStr, context: Context, lower_layer: Layer):
         raise NotImplementedError()
 
 
 class Env(Getter):
-    def __init__(self, envar):
+    def __init__(self, envar: AnyStr):
         self.envar = envar
 
     def read(self, key, rest, context, lower_layer):
@@ -144,7 +143,7 @@ class Env(Getter):
 
 
 class Transform(Getter):
-    def __init__(self, getter, f):
+    def __init__(self, getter: Getter, f):
         self.getter = getter
         self.f = f
 
@@ -156,7 +155,7 @@ class Transform(Getter):
 
 
 class Constant(Getter):
-    def __init__(self, c):
+    def __init__(self, c: Any):
         self.c = c
 
     def read(self, key, res, context, lower_layer):
@@ -164,7 +163,7 @@ class Constant(Getter):
 
 
 class GetterStack(Getter):
-    def __init__(self, getters):
+    def __init__(self, getters: Iterable[Getter]):
         self.getters = getters
 
     def read(self, key, res, context, lower_layer):
