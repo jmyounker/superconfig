@@ -1,5 +1,5 @@
 """Configuration library."""
-
+import os
 from typing import Any
 from typing import AnyStr
 from typing import Optional
@@ -96,3 +96,69 @@ class NullLayer:
     def get_item(cls, key, context):
         return ReadResult.NotFound, Continue.Go, None
 
+
+class SmartLayer:
+    def __init__(self):
+        self.getters = {}
+
+    def get_item(self, key: AnyStr, context: Context) -> Tuple[int, int, Optional[Any]]:
+        indexes = key.split('.')
+        for i in indexes:
+            k = ".".join(indexes[0:i])
+            if k not in self.getters:
+                continue
+            found, cont, v = self.getters[k].read(k, indexes[i+1:len(indexes)], context)
+            if found == ReadResult.Found:
+                return found, cont, v
+            if cont == Continue.Stop:
+                return found, cont, v
+        return ReadResult.NotFound, Continue.Go, None
+
+
+class Getter:
+    def read(self, key, rest, context):
+        raise NotImplementedError()
+
+
+class Env(Getter):
+    def __init__(self, envar):
+        self.envar = envar
+
+    def read(self, key, rest, context):
+        if self.envar not in os.environ:
+            return ReadResult.NotFound, Continue.Go, None
+        return os.environ[self.envar]
+
+
+class Transform(Getter):
+    def __init__(self, getter, f):
+        self.getter = getter
+        self.f = f
+
+    def read(self, key, res, context):
+        found, cont, v = self.getter.read(key, res, context)
+        if found == ReadResult.Found:
+            return found, cont, self.f(v)
+        return found, cont, v
+
+
+class Constant(Getter):
+    def __init__(self, c):
+        self.c = c
+
+    def read(self, key, res, context):
+        return ReadResult.Found, Continue.Go, self.c
+
+
+class GetterStack(Getter):
+    def __init__(self, getters):
+        self.getters = getters
+
+    def read(self, key, res, context):
+        for g in self.getters:
+            found, cont, v = g.read(key, res, context)
+            if found == ReadResult.Found:
+                return found, cont, v
+            if cont == Continue.Stop:
+                return found, cont, v
+        return ReadResult.NotFound, Continue.Go, None
