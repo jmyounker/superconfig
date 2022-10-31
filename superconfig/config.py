@@ -51,6 +51,7 @@ class Config:
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
+
 class DictLayer(Layer):
     def __init__(self, data):
         self.data = data
