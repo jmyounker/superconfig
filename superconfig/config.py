@@ -73,16 +73,16 @@ class LayerCake:
     def __init__(self):
         self.layers = [NullLayer]
 
-    def push_layer(self, layer):
+    def push(self, layer):
         self.layers.append(layer)
 
-    def pop_layer(self):
+    def pop(self):
         if len(self.layers) == 1:
             raise Exception("no more layers to pop")
         self.layers = self.layers[:-2]
 
     def get_item(self, key: AnyStr, context: Context) -> Tuple[int, int, Optional[Any]]:
-        for i in range(len(self.layers), 0, step=-1):
+        for i in range(len(self.layers)-1, 0, -1):
             found, cont, v = self.layers[i].get_item(key, context)
             if found == ReadResult.Found:
                 return found, cont, v
