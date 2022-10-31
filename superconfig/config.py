@@ -46,6 +46,7 @@ class Config:
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
+
 class Layer:
     def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
         raise NotImplemented
