@@ -44,4 +44,3 @@ def test_get():
     for (d, k, default, res) in test_cases:
         config = Config(Context(), DictLayer(d))
         assert config.get(k, default) == res
-
