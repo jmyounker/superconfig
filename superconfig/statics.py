@@ -25,4 +25,3 @@ class DictLayer(config.Layer):
         if isinstance(v, dict):
             return config.ReadResult.NotFound, config.Continue.Go, None
         return config.ReadResult.Found, config.Continue.Go, v
-
