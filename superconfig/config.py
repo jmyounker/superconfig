@@ -30,7 +30,7 @@ class Layer:
 
 
 class Config:
-    def __init__(self, context: Context, layer: Layer):
+    def __init__(self, context: Context, layer=None):
         self.context = context
         self.layer = layer
 
@@ -51,6 +51,13 @@ class Config:
             return default
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
+
+
+def layered_config(context, layers=None):
+    config = Config(context, LayerCake())
+    for layer in (layers or []):
+        config.layer.push(layer)
+    return config
 
 
 class LayerCake(Layer):
