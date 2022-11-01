@@ -3,7 +3,7 @@ from typing import Tuple
 from typing import Optional
 from typing import Any
 
-import config
+from . import config
 
 
 class DictLayer(config.Layer):
