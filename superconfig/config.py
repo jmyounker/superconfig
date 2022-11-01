@@ -1,7 +1,8 @@
 """Configuration library."""
 import os
-from typing import Any, Iterable, Self
+from typing import Any
 from typing import AnyStr
+from typing import Iterable
 from typing import Optional
 from typing import Tuple
 
@@ -24,7 +25,7 @@ class Context:
 
 
 class Layer:
-    def get_item(self, key: AnyStr, context: Context, lower_layer: Self) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
         raise NotImplemented()
 
 
@@ -50,27 +51,6 @@ class Config:
             return default
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
-
-
-class DictLayer(Layer):
-    def __init__(self, data):
-        self.data = data
-
-    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
-        """Gets the value for key or (Found, Go, None) if not found on terminal node."""
-        indexes = key.split('.')
-        v = self.data
-        for i in range(0, len(indexes)):
-            if not isinstance(v, dict):
-                return ReadResult.NotFound, Continue.Go, None
-            index = indexes[i]
-            if index not in v:
-                return ReadResult.NotFound, Continue.Go, None
-            v = v[index]
-        # Last item must not be a dict
-        if isinstance(v, dict):
-            return ReadResult.NotFound, Continue.Go, None
-        return ReadResult.Found, Continue.Go, v
 
 
 class LayerCake(Layer):
