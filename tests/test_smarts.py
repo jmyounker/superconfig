@@ -33,3 +33,21 @@ def test_node_hides_leaf():
     assert c["a.b.c"] == 5
 
 
+def test_env_getter_with_missing_envar(monkeypatch):
+    s = sc.SmartLayer()
+    s["a.b"] = sc.Env("AB")
+    c = sc.Config(sc.Context(), s)
+    monkeypatch.delenv("AB", raising=False)
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
+
+
+def test_env_getter_with_envar(monkeypatch):
+    s = sc.SmartLayer()
+    s["a.b"] = sc.Env("AB")
+    c = sc.Config(sc.Context(), s)
+    monkeypatch.setenv("AB", "")
+    assert c["a.b"] == ""
+    monkeypatch.setenv("AB", "foo")
+    assert c["a.b"] == "foo"
+

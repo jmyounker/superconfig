@@ -70,7 +70,7 @@ class Env(Getter):
     def read(self, key, rest, context, lower_layer):
         if self.envar not in os.environ:
             return config.ReadResult.NotFound, config.Continue.Go, None
-        return os.environ[self.envar]
+        return config.ReadResult.Found, config.Continue.Go, os.environ[self.envar]
 
 
 class Transform(Getter):
@@ -99,4 +99,3 @@ class Constant(Getter):
 
     def read(self, key, res, context, lower_layer):
         return config.ReadResult.Found, config.Continue.Go, self.c
-
