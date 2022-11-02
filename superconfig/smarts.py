@@ -96,8 +96,6 @@ class Transform(Getter):
             raise AttributeError("could not parse value %s for key %s: %s", v, key, str(e))
 
 
-
-
 class Constant(Getter):
     """Always returns the assigned constant."""
     def __init__(self, c: Any):
