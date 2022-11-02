@@ -81,9 +81,9 @@ class Transform(Getter):
     into an object or a two element array into a complex number.
 
     """
-    def __init__(self, getter: Getter, f):
-        self.getter = getter
+    def __init__(self, f, getter: Getter):
         self.f = f
+        self.getter = getter
 
     def read(self, key, res, context, lower_layer):
         found, cont, v = self.getter.read(key, res, context, lower_layer)

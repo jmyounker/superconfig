@@ -109,3 +109,18 @@ def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
     monkeypatch.delenv("AB")
     with pytest.raises(KeyError):
         _ = c["a.b.c"]
+
+
+def test_transform_on_found():
+    s = sc.SmartLayer()
+    s["a.b"] = sc.Transform(f=int, getter=sc.Constant("5"))
+    c = sc.Config(sc.Context(), s)
+    assert c["a.b"] == 5
+
+
+def test_transform_on_not_found_is_not_found():
+    s = sc.SmartLayer()
+    s["a.b"] = sc.Transform(f=int, getter=sc.NotFound())
+    c = sc.Config(sc.Context(), s)
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
