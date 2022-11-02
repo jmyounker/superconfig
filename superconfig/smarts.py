@@ -100,7 +100,22 @@ class Constant(Getter):
     def read(self, key, res, context, lower_layer):
         return config.ReadResult.Found, config.Continue.Go, self.c
 
+
 class NotFound(Getter):
+    """Simulates not found item. Exists for testing."""
     @classmethod
     def read(cls, key, res, context, lower_layer):
         return config.ReadResult.NotFound, config.Continue.Go, None
+
+
+class Stop(Getter):
+    """Halts all processing.
+
+    Putting this at the bottom of a GetterStack causes the stack
+    to act like a leaf node. Anything further down the tree will
+    be skipped and not found will immediately result.
+
+    """
+    @classmethod
+    def read(cls, key, res, context, lower_layer):
+        return config.ReadResult.NotFound, config.Continue.Stop, None

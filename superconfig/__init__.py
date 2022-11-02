@@ -9,4 +9,5 @@ from .smarts import Getter
 from .smarts import GetterStack
 from .smarts import NotFound
 from .smarts import SmartLayer
+from .smarts import Stop
 from .smarts import Transform
