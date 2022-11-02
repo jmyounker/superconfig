@@ -15,9 +15,12 @@ class SmartLayer(config.Layer):
     def __init__(self):
         self.getters = {}
 
+    def __setitem__(self, key, getter):
+        self.getters[key] = getter
+
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         indexes = key.split('.')
-        for i in range(len(indexes)):
+        for i in range(1, len(indexes)+1):
             k = ".".join(indexes[0:i])
             if k not in self.getters:
                 continue
