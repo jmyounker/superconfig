@@ -98,6 +98,7 @@ def test_how_to_make_envar_with_default(monkeypatch):
     monkeypatch.delenv("AB")
     assert c["a.b"] == 6
 
+
 def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
     s = sc.SmartLayer()
     s["a.b"] = sc.GetterStack([sc.Env("AB"), sc.Stop()])
