@@ -5,6 +5,19 @@ from typing import Optional
 from typing import Tuple
 
 
+class ValueTransformException(Exception):
+    """Propagates an error generated while manipulating a retrieve value.
+
+    Propagates an error resulting from an exception while transforming a value
+    from one form to another.
+    """
+    def __init__(self, key, raw_value, exception, *args):
+        super(self.__class__, self).__init__(*args)
+        self.key = key
+        self.raw_value = raw_value
+        self.exception = exception
+
+
 class ReadResult:
     NotFound = 0  # Not found, continue search
     Found = 1  # Found, do not continue search
@@ -33,7 +46,7 @@ class Config:
         self.layer = layer
 
     def __getitem__(self, key: AnyStr) -> Optional[Any]:
-        status, cont, value = self.layer.get_item(key, self.context, NullLayer)
+        status, cont, value = self._get_item(key, self.context, NullLayer)
         if status == ReadResult.Found:
             return value
         elif status == ReadResult.NotFound:
@@ -42,13 +55,23 @@ class Config:
             raise Exception("Unknown status {} found for key {}".format(status, value))
 
     def get(self, key: AnyStr, default: Optional[Any] = None) -> Optional[Any]:
-        status, cont, value = self.layer.get_item(key, self.context, NullLayer)
+        status, cont, value = self._get_item(key, self.context, NullLayer)
         if status == ReadResult.Found:
             return value
         elif status == ReadResult.NotFound:
             return default
         else:
             raise Exception("Unknown status {} found for key {}".format(status, value))
+
+    def _get_item(self, *args, **kwargs):
+        try:
+            return self.layer.get_item(*args, **kwargs)
+        except ValueTransformException as e:
+            raise ValueError(
+                "could not parse value %s for key %s: %s",
+                e.raw_value,
+                e.key,
+                str(e.exception))
 
 
 def layered_config(context, layers=None):

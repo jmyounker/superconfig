@@ -136,5 +136,7 @@ def test_transform_failure():
         raise Oops
     s["a.b"] = sc.Transform(f=oops, getter=sc.Constant(5))
     c = sc.Config(sc.Context(), s)
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         _ = c["a.b"]
+    with pytest.raises(ValueError):
+        _ = c.get("a.b")

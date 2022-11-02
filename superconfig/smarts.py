@@ -93,7 +93,7 @@ class Transform(Getter):
         try:
             return found, cont, self.f(v)
         except Exception as e:
-            raise AttributeError("could not parse value %s for key %s: %s", v, key, str(e))
+            raise config.ValueTransformException(key, v, e)
 
 
 class Constant(Getter):
@@ -123,3 +123,4 @@ class Stop(Getter):
     @classmethod
     def read(cls, key, res, context, lower_layer):
         return config.ReadResult.NotFound, config.Continue.Stop, None
+
