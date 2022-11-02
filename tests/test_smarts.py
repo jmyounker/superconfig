@@ -140,3 +140,35 @@ def test_transform_failure():
         _ = c["a.b"]
     with pytest.raises(ValueError):
         _ = c.get("a.b")
+
+
+def test_ignore_transform_failure():
+    s = sc.SmartLayer()
+
+    class Oops(Exception):
+        pass
+
+    def oops(x):
+        raise Oops
+    s["a.b"] = sc.IgnoreTransformErrors(sc.Transform(f=oops, getter=sc.Constant(5)))
+    c = sc.Config(sc.Context(), s)
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
+
+
+def test_how_to_default_when_transform_fails():
+    s = sc.SmartLayer()
+
+    class Oops(Exception):
+        pass
+
+    def oops(x):
+        raise Oops
+    s["a.b"] = sc.GetterStack(
+        [
+            sc.IgnoreTransformErrors(sc.Transform(f=oops, getter=sc.Constant(5))),
+            sc.Constant(6),
+        ]
+    )
+    c = sc.Config(sc.Context(), s)
+    assert c["a.b"] == 6

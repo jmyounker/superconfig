@@ -124,3 +124,14 @@ class Stop(Getter):
     def read(cls, key, res, context, lower_layer):
         return config.ReadResult.NotFound, config.Continue.Stop, None
 
+
+class IgnoreTransformErrors(Getter):
+    """Turns getter's transform errors into NotFound"""
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key, res, context, lower_layer):
+        try:
+            return self.getter.read(key, res, context, lower_layer)
+        except config.ValueTransformException:
+            return config.ReadResult.NotFound, config.Continue.Go, None
