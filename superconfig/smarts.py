@@ -99,3 +99,8 @@ class Constant(Getter):
 
     def read(self, key, res, context, lower_layer):
         return config.ReadResult.Found, config.Continue.Go, self.c
+
+class NotFound(Getter):
+    @classmethod
+    def read(cls, key, res, context, lower_layer):
+        return config.ReadResult.NotFound, config.Continue.Go, None
