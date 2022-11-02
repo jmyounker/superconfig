@@ -124,3 +124,17 @@ def test_transform_on_not_found_is_not_found():
     c = sc.Config(sc.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a.b"]
+
+
+def test_transform_failure():
+    s = sc.SmartLayer()
+
+    class Oops(Exception):
+        pass
+
+    def oops(x):
+        raise Oops
+    s["a.b"] = sc.Transform(f=oops, getter=sc.Constant(5))
+    c = sc.Config(sc.Context(), s)
+    with pytest.raises(AttributeError):
+        _ = c["a.b"]

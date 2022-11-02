@@ -87,9 +87,15 @@ class Transform(Getter):
 
     def read(self, key, res, context, lower_layer):
         found, cont, v = self.getter.read(key, res, context, lower_layer)
-        if found == config.ReadResult.Found:
+        if found == config.ReadResult.NotFound:
+            return found, cont, v
+        # noinspection PyBroadException
+        try:
             return found, cont, self.f(v)
-        return found, cont, v
+        except Exception as e:
+            raise AttributeError("could not parse value %s for key %s: %s", v, key, str(e))
+
+
 
 
 class Constant(Getter):
