@@ -193,7 +193,7 @@ def test_expansion_layer():
         ("a.{f}.{h.i}.{f}.b", 2),
         ("a.{q}", KeyError),
     ]:
-        is_expected_getitem(c, k, res)
+        assert is_expected_getitem(c, k, res)
 
 
 def test_graft():
@@ -208,4 +208,4 @@ def test_graft():
         ("a.b.d", KeyError),
         ("a.b", 1),
     ]:
-        is_expected_getitem(c, k, res)
+        assert is_expected_getitem(c, k, res)
