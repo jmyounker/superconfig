@@ -1,5 +1,4 @@
-import pytest
-
+from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
 from superconfig import Config
@@ -77,12 +76,3 @@ def test_layered_config():
     for (layers, k, res) in test_cases:
         config = layered_config(Context(), [DictLayer(x) for x in layers])
         assert is_expected_getitem(config, k, res)
-
-
-def is_expected_getitem(config, key, res):
-    if res is KeyError:
-        with pytest.raises(KeyError):
-            _ = config[key]
-        return True
-    else:
-        return config[key] == res

@@ -1,6 +1,7 @@
 """Perform specific actions for specific keys."""
 
 import os
+import re
 from typing import Any
 from typing import AnyStr
 from typing import Iterable
@@ -12,8 +13,10 @@ from . import config
 
 class SmartLayer(config.Layer):
     """Attache"""
-    def __init__(self):
-        self.getters = {}
+    def __init__(self, getters=None):
+        if getters is None:
+            getters = {}
+        self.getters = getters
 
     def __setitem__(self, key, getter):
         self.getters[key] = getter
@@ -135,3 +138,21 @@ class IgnoreTransformErrors(Getter):
             return self.getter.read(key, res, context, lower_layer)
         except config.ValueTransformException:
             return config.ReadResult.NotFound, config.Continue.Go, None
+
+
+class KeyExpansionLayer(config.Layer):
+
+    expansions_ptrn = re.compile(r"\{([^}]+)\}")
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
+        expansions = set(self.expansions_ptrn.findall(key))
+        replacements = []
+        for exp in expansions:
+            found, cont, v = lower_layer.get_item(exp, context, config.NullLayer)
+            if found == config.ReadResult.NotFound:
+                return found, config.Continue.Stop, v
+            replacements.append(('{%s}' % exp, v))
+        ke = key
+        for exp, v in replacements:
+            ke = ke.replace(exp, v)
+        return lower_layer.get_item(ke, context, config.NullLayer)

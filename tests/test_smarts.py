@@ -1,5 +1,6 @@
 import pytest
 
+from .helpers import is_expected_getitem
 import superconfig as sc
 
 
@@ -172,3 +173,24 @@ def test_how_to_default_when_transform_fails():
     )
     c = sc.Config(sc.Context(), s)
     assert c["a.b"] == 6
+
+
+def test_expansion_layer():
+    c = sc.layered_config(sc.Context(), [
+            sc.KeyExpansionLayer(),
+            sc.SmartLayer(
+                {
+                    "a.foo.bar.foo.b": sc.Constant(1),
+                    "a.foo.baz.foo.b": sc.Constant(2),
+                },
+            ),
+            sc.SmartLayer({}),
+            sc.DictLayer({"f": "foo", "g": "bar", "h": { "i": "baz"}}),
+        ]
+    )
+    for k, res in [
+        ("a.{f}.{g}.{f}.b", 1),
+        ("a.{f}.{h.i}.{f}.b", 2),
+        ("a.{q}", KeyError),
+    ]:
+        is_expected_getitem(c, k, res)
