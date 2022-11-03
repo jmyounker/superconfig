@@ -75,10 +75,14 @@ class Config:
 
 
 def layered_config(context, layers=None):
-    config = Config(context, LayerCake())
-    for layer in (layers or []):
-        config.layer.push(layer)
-    return config
+    return Config(context, layer_stack(layers or []))
+
+
+def layer_stack(layers):
+    stack = LayerCake()
+    for layer in reversed(layers):
+        stack.push(layer)
+    return stack
 
 
 class LayerCake(Layer):

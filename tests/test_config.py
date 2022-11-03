@@ -1,6 +1,7 @@
 import pytest
 
 from config import LayerCake
+from config import layered_config
 from superconfig import Config
 from superconfig import DictLayer
 from superconfig import Context
@@ -19,11 +20,7 @@ def test_getitem():
     ]
     for (d, k, res) in test_cases:
         config = Config(Context(), DictLayer(d))
-        if res is KeyError:
-            with pytest.raises(KeyError):
-                _ = config[k]
-        else:
-            assert config[k] == res
+        assert is_expected_getitem(config, k, res)
 
 
 def test_get():
@@ -66,8 +63,26 @@ def test_layering_getitem():
         for layer in layers:
             layer_cake.push(DictLayer(layer))
         config = Config(Context(), layer_cake)
-        if res is KeyError:
-            with pytest.raises(KeyError):
-                _ = config[k]
-        else:
-            assert config[k] == res
+        assert is_expected_getitem(config, k, res)
+
+
+def test_layered_config():
+    test_cases = [
+        ([], "a", KeyError),
+        ([{"a": 1}], "a", 1),
+        ([{"a": 1}, {"a": 2}], "a", 1),
+        ([{"a": 1}, {"a": 2, "b": 3}], "b", 3),
+        ([{"a": 1}, {"a": 2, "b": 3}], "c", KeyError),
+    ]
+    for (layers, k, res) in test_cases:
+        config = layered_config(Context(), [DictLayer(x) for x in layers])
+        assert is_expected_getitem(config, k, res)
+
+
+def is_expected_getitem(config, key, res):
+    if res is KeyError:
+        with pytest.raises(KeyError):
+            _ = config[key]
+        return True
+    else:
+        return config[key] == res
