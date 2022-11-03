@@ -194,3 +194,18 @@ def test_expansion_layer():
         ("a.{q}", KeyError),
     ]:
         is_expected_getitem(c, k, res)
+
+
+def test_graft():
+    c = sc.layered_config(sc.Context(), [
+            sc.SmartLayer({
+                "a": sc.Graft(sc.DictLayer({"b": 1, "c": 2})),
+                "a.b.d": sc.Constant(4)
+            }),
+        ]
+    )
+    for k, res in [
+        ("a.b.d", KeyError),
+        ("a.b", 1),
+    ]:
+        is_expected_getitem(c, k, res)

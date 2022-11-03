@@ -27,11 +27,13 @@ class SmartLayer(config.Layer):
             k = ".".join(indexes[0:i])
             if k not in self.getters:
                 continue
-            found, cont, v = self.getters[k].read(k, indexes[i+1:len(indexes)], context, lower_layer)
+            found, cont, v = self.getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
             if found == config.ReadResult.Found:
                 return found, cont, v
-            if cont == config.Continue.Stop:
+            elif cont == config.Continue.Stop:
                 return found, cont, v
+            elif cont == config.Continue.NextLayer:
+                return found, config.Continue.Go, v
         return config.ReadResult.NotFound, config.Continue.Go, None
 
 
@@ -156,3 +158,17 @@ class KeyExpansionLayer(config.Layer):
         for exp, v in replacements:
             ke = ke.replace(exp, v)
         return lower_layer.get_item(ke, context, config.NullLayer)
+
+
+class Graft(Getter):
+    def __init__(self, layer):
+        self.layer = layer
+
+    def read(self, key, rest, context, lower_layer):
+        found, cont, v = self.layer.get_item('.'.join(rest), context, lower_layer)
+        if found == config.ReadResult.NotFound:
+            return found, config.Continue.NextLayer, v
+        elif cont == config.Continue.Go:
+            return found, config.Continue.NextLayer, v
+        else:
+            return found, cont, v

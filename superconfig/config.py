@@ -26,6 +26,7 @@ class ReadResult:
 class Continue:
     Stop = 0  # Terminate
     Go = 1  # Continue
+    NextLayer = 2  # Continue in th next layer
 
 
 class Context:
