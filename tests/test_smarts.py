@@ -280,15 +280,65 @@ def test_file_load_layer_loads_files(tmp_path):
 
 
 def test_file_load_layer_does_not_reload_during_cache_period(tmp_path):
-    pass
+    check_period_s = 3
+    now = datetime.datetime.now()
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.LayerLoader(
+            sc.DictLayer.from_file,
+            str(f),
+            check_period_s=check_period_s,
+        )])
+    with freezegun.freeze_time(now):
+        assert c["a"] == 1
+        f.write_text(json.dumps({"a": 2}))
+    with freezegun.freeze_time(now + datetime.timedelta(seconds=check_period_s-1)):
+        assert c["a"] == 1
 
 
 def test_file_load_layer_does_not_load_unchanged_files(tmp_path):
-    pass
+    loaded = [False]
+
+    def load_checking_loader(f):
+        loaded[0] = True
+        return sc.DictLayer.from_file(f)
+
+    check_period_s = 3
+    now = datetime.datetime.now()
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.LayerLoader(
+            load_checking_loader,
+            str(f),
+            check_period_s=check_period_s,
+        )])
+    with freezegun.freeze_time(now):
+        assert c["a"] == 1
+        assert loaded[0]
+        loaded[0] = False
+    with freezegun.freeze_time(now + datetime.timedelta(seconds=check_period_s+1)):
+        assert c["a"] == 1
+        assert not loaded[0]
 
 
 def test_file_load_layer_loads_changed_files_after_cache_period(tmp_path):
-    pass
+    check_period_s = 3
+    now = datetime.datetime.now()
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.LayerLoader(
+            sc.DictLayer.from_file,
+            str(f),
+            check_period_s=check_period_s,
+        )])
+    with freezegun.freeze_time(now):
+        assert c["a"] == 1
+        f.write_text(json.dumps({"a": 2}))
+    with freezegun.freeze_time(now + datetime.timedelta(seconds=check_period_s+1)):
+        assert c["a"] == 2
 
 
 def test_file_load_layer_w_clear_clears_config_after_file_removed(tmp_path):

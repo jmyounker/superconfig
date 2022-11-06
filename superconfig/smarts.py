@@ -213,27 +213,35 @@ class LayerLoader:
         self.layer = config.NullLayer()
         self.next_refresh_time = 0
         self.last_successful_load_time = 0
+        self.last_mtime = 0
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
         now = time.time()
-        if self.next_refresh_time <= now and self.should_load(now):
-            try:
-                # TODO(jmyounker): Add conditional reload
-                # TODO(jmyounker): Wipe config if file vanishes
-                self.load_layer(now)
-            except LayerLoadError as e:
-                return config.ReadResult.NotFound, config.Continue.Go, None
-        return self.layer.get_item(key, context, lower_layer)
+        if self.next_refresh_time > now:
+            return self.layer.get_item(key, context, lower_layer)
+        try:
+            s = os.stat(self.filename)
+            if s.st_mtime <= self.last_mtime:
+                return self.layer.get_item(key, context, lower_layer)
+            # TODO(jmyounker): Wipe config if file vanishes
+            self.load_layer(now)
+            self.last_mtime = s.st_mtime
+            return self.layer.get_item(key, context, lower_layer)
+        except LayerLoadError as e:
+            self.next_refresh_time = now + self.failed_retry_interval_s
+            return config.ReadResult.NotFound, config.Continue.Go, None
+
 
     def load_layer(self, now):
         try:
             with open(self.filename, 'rb') as f:
                 self.layer = self.layer_constructor(f)
         except IOError as e:
-            self.next_refresh_time = now + self.failed_retry_interval_s
             raise LayerLoadError(e)
         self.last_successful_load_time = now
         self.next_refresh_time = now + self.check_interval_s
 
     def should_load(self, now):
-        return True
+        stat = os.stat(self.filename)
+        return stat.st_mtime > self.last_mtime
+
