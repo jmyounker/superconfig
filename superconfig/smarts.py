@@ -223,7 +223,7 @@ class LayerLoader:
         self.last_mtime = 0
         self.clear_on_not_found = clear_on_not_found
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
         now = time.time()
         if self.next_refresh_time > now:
             return self.layer.get_item(key, context, lower_layer)
@@ -231,7 +231,6 @@ class LayerLoader:
             s = os.stat(self.filename)
             if s.st_mtime <= self.last_mtime:
                 return self.layer.get_item(key, context, lower_layer)
-            # TODO(jmyounker): Wipe config if file vanishes
             with open(self.filename, 'rb') as f:
                 self.layer = self.layer_constructor(f)
             self.last_successful_load_time = now
@@ -243,6 +242,6 @@ class LayerLoader:
                 self.layer = config.NullLayer
                 self.next_refresh_time = now + self.failed_retry_interval_s
             return self.layer.get_item(key, context, lower_layer)
-        except IOError:
+        except Exception:
             self.next_refresh_time = now + self.failed_retry_interval_s
             return self.layer.get_item(key, context, lower_layer)
