@@ -1,3 +1,6 @@
+import datetime
+
+import freezegun
 import pytest
 
 from .helpers import is_expected_getitem
@@ -209,3 +212,54 @@ def test_graft():
         ("a.b", 1),
     ]:
         assert is_expected_getitem(c, k, res)
+
+
+def test_cache_caches_records():
+    timeout_s = 5
+    with freezegun.freeze_time():
+        c = sc.layered_config(sc.Context(), [
+            sc.CacheLayer(timeout_s=timeout_s),
+            sc.SmartLayer({
+                "a": sc.Counter(0),
+            })
+        ])
+        assert c["a"] == 1
+        assert c["a"] == 1
+
+
+def test_cache_flushes_after_timeout():
+    timeout_s = 5
+    with freezegun.freeze_time():
+        c = sc.layered_config(sc.Context(), [
+            sc.CacheLayer(timeout_s=timeout_s),
+            sc.SmartLayer({
+                "a": sc.Counter(0),
+            })
+        ])
+        assert c["a"] == 1
+        now = datetime.datetime.now()
+    with freezegun.freeze_time(now + datetime.timedelta(seconds=timeout_s+1)):
+        assert c["a"] == 2
+
+
+def test_cache_records_have_distinct_expirations():
+    timeout_s = 5
+    test_cases = [
+        (0, [("a", 1)]),
+        (2, [("a", 1), ("b", 11)]),
+        (3, [("a", 1), ("b", 11)]),
+        (6, [("a", 2), ("b", 11)]),
+        (9, [("a", 2), ("b", 12)]),
+    ]
+    c = sc.layered_config(sc.Context(), [
+        sc.CacheLayer(timeout_s=timeout_s),
+        sc.SmartLayer({
+            "a": sc.Counter(0),
+            "b": sc.Counter(10),
+        })
+    ])
+    now = datetime.datetime.now()
+    for (t, samples) in test_cases:
+        with freezegun.freeze_time(now + datetime.timedelta(seconds=t)):
+            for key, expected_value in samples:
+                assert c[key] == expected_value

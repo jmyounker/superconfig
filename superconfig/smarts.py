@@ -2,7 +2,8 @@
 
 import os
 import re
-from typing import Any
+import time
+from typing import Any, Tuple
 from typing import AnyStr
 from typing import Iterable
 from typing import Optional
@@ -142,9 +143,19 @@ class IgnoreTransformErrors(Getter):
             return config.ReadResult.NotFound, config.Continue.Go, None
 
 
+class Counter(Getter):
+    """Counts up from n."""
+    def __init__(self, n=0):
+        self.n = n
+
+    def read(self, key, res, context, lower_layer):
+        self.n += 1
+        return config.ReadResult.Found, config.Continue.Go, self.n
+
+
 class KeyExpansionLayer(config.Layer):
 
-    expansions_ptrn = re.compile(r"\{([^}]+)\}")
+    expansions_ptrn = re.compile(r"\{([^}]+)}")
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         expansions = set(self.expansions_ptrn.findall(key))
@@ -172,3 +183,18 @@ class Graft(Getter):
             return found, config.Continue.NextLayer, v
         else:
             return found, cont, v
+
+
+class CacheLayer():
+    def __init__(self, timeout_s=5):
+        self.cache = {}
+        self.timeout_s = timeout_s
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
+        now = time.time()
+        resp, invalid_at = self.cache.get(key, ((config.ReadResult.NotFound, config.Continue.Go, None), now))
+        if invalid_at > now:
+            return resp
+        resp = lower_layer.get_item(key, context, config.NullLayer())
+        self.cache[key] = (resp, now + self.timeout_s)
+        return resp
