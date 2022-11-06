@@ -228,13 +228,8 @@ class LayerLoader:
     def load_layer(self, now):
         try:
             with open(self.filename, 'rb') as f:
-                raw_config = f.read().decode('utf-8')
+                self.layer = self.layer_constructor(f)
         except IOError as e:
-            self.next_refresh_time = now + self.failed_retry_interval_s
-            raise LayerLoadError(e)
-        try:
-            self.layer = self.layer_constructor(raw_config)
-        except Exception as e:
             self.next_refresh_time = now + self.failed_retry_interval_s
             raise LayerLoadError(e)
         self.last_successful_load_time = now
