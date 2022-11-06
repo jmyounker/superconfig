@@ -3,7 +3,7 @@
 import os
 import re
 import time
-from typing import Any, Tuple
+from typing import Any
 from typing import AnyStr
 from typing import Iterable
 from typing import Optional
@@ -198,10 +198,6 @@ class CacheLayer:
         resp = lower_layer.get_item(key, context, config.NullLayer())
         self.cache[key] = (resp, now + self.timeout_s)
         return resp
-
-
-class LayerLoadError(Exception):
-    pass
 
 
 class LayerLoader:
