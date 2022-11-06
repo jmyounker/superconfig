@@ -377,4 +377,3 @@ def test_file_load_layer_wo_clear_keeps_config_after_file_removal(tmp_path):
         f.unlink()
     with freezegun.freeze_time(now + datetime.timedelta(seconds=check_period_s+1)):
         assert c["a"] == 1
-
