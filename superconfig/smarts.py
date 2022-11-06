@@ -205,15 +205,23 @@ class LayerLoadError(Exception):
 
 
 class LayerLoader:
-    def __init__(self, layer_constructor, filename, check_period_s=10, failed_retry_period_s=5):
+    def __init__(
+            self,
+            layer_constructor,
+            filename,
+            check_period_s=10,
+            failed_retry_period_s=5,
+            clear_on_not_found=False
+    ):
         self.layer_constructor = layer_constructor
         self.filename = filename
         self.check_interval_s = check_period_s
         self.failed_retry_interval_s = failed_retry_period_s
-        self.layer = config.NullLayer()
+        self.layer = config.NullLayer
         self.next_refresh_time = 0
         self.last_successful_load_time = 0
         self.last_mtime = 0
+        self.clear_on_not_found = clear_on_not_found
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
         now = time.time()
@@ -224,24 +232,17 @@ class LayerLoader:
             if s.st_mtime <= self.last_mtime:
                 return self.layer.get_item(key, context, lower_layer)
             # TODO(jmyounker): Wipe config if file vanishes
-            self.load_layer(now)
-            self.last_mtime = s.st_mtime
-            return self.layer.get_item(key, context, lower_layer)
-        except LayerLoadError as e:
-            self.next_refresh_time = now + self.failed_retry_interval_s
-            return config.ReadResult.NotFound, config.Continue.Go, None
-
-
-    def load_layer(self, now):
-        try:
             with open(self.filename, 'rb') as f:
                 self.layer = self.layer_constructor(f)
-        except IOError as e:
-            raise LayerLoadError(e)
-        self.last_successful_load_time = now
-        self.next_refresh_time = now + self.check_interval_s
-
-    def should_load(self, now):
-        stat = os.stat(self.filename)
-        return stat.st_mtime > self.last_mtime
-
+            self.last_successful_load_time = now
+            self.last_mtime = s.st_mtime
+            self.next_refresh_time = now + self.check_interval_s
+            return self.layer.get_item(key, context, lower_layer)
+        except FileNotFoundError:
+            if self.clear_on_not_found:
+                self.layer = config.NullLayer
+                self.next_refresh_time = now + self.failed_retry_interval_s
+            return self.layer.get_item(key, context, lower_layer)
+        except IOError:
+            self.next_refresh_time = now + self.failed_retry_interval_s
+            return self.layer.get_item(key, context, lower_layer)
