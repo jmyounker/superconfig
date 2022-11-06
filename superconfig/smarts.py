@@ -185,7 +185,7 @@ class Graft(Getter):
             return found, cont, v
 
 
-class CacheLayer():
+class CacheLayer:
     def __init__(self, timeout_s=5):
         self.cache = {}
         self.timeout_s = timeout_s
@@ -198,3 +198,44 @@ class CacheLayer():
         resp = lower_layer.get_item(key, context, config.NullLayer())
         self.cache[key] = (resp, now + self.timeout_s)
         return resp
+
+
+class LayerLoadError(Exception):
+    pass
+
+
+class LayerLoader:
+    def __init__(self, layer_constructor, filename, check_period_s=10, failed_retry_period_s=5):
+        self.layer_constructor = layer_constructor
+        self.filename = filename
+        self.check_interval_s = check_period_s
+        self.failed_retry_interval_s = failed_retry_period_s
+        self.layer = config.NullLayer()
+        self.next_refresh_time = 0
+        self.last_successful_load_time = 0
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
+        now = time.time()
+        if self.next_refresh_time <= now:
+            try:
+                # TODO(jmyounker): Add conditional reload
+                # TODO(jmyounker): Wipe config if file vanishes
+                self.load_layer(now)
+            except LayerLoadError as e:
+                return config.ReadResult.NotFound, config.Continue.Go, None
+        return self.layer.get_item(key, context, lower_layer)
+
+    def load_layer(self, now):
+        try:
+            with open(self.filename, 'rb') as f:
+                raw_config = f.read().decode('utf-8')
+        except IOError as e:
+            self.next_refresh_time = now + self.failed_retry_interval_s
+            raise LayerLoadError(e)
+        try:
+            self.layer = self.layer_constructor(raw_config)
+        except Exception as e:
+            self.next_refresh_time = now + self.failed_retry_interval_s
+            raise LayerLoadError(e)
+        self.last_successful_load_time = now
+        self.next_refresh_time = now + self.check_interval_s

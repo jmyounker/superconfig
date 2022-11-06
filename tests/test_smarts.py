@@ -263,3 +263,7 @@ def test_cache_records_have_distinct_expirations():
         with freezegun.freeze_time(now + datetime.timedelta(seconds=t)):
             for key, expected_value in samples:
                 assert c[key] == expected_value
+
+
+def test_file_load_layer(tmp_path):
+    pass
