@@ -216,7 +216,7 @@ class LayerLoader:
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
         now = time.time()
-        if self.next_refresh_time <= now:
+        if self.next_refresh_time <= now and self.should_load(now):
             try:
                 # TODO(jmyounker): Add conditional reload
                 # TODO(jmyounker): Wipe config if file vanishes
@@ -234,3 +234,6 @@ class LayerLoader:
             raise LayerLoadError(e)
         self.last_successful_load_time = now
         self.next_refresh_time = now + self.check_interval_s
+
+    def should_load(self, now):
+        return True
