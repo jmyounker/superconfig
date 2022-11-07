@@ -3,6 +3,7 @@ from config import LayerCake
 from config import layered_config
 from superconfig import Config
 from superconfig import JsonLayer
+from superconfig import InnerJsonLayer
 from superconfig import Context
 
 
@@ -75,4 +76,20 @@ def test_layered_config():
     ]
     for (layers, k, res) in test_cases:
         config = layered_config(Context(), [JsonLayer(x) for x in layers])
+        assert is_expected_getitem(config, k, res)
+
+
+def test_inner_json_layer():
+    test_cases = [
+        ({}, "a", KeyError),
+        ({"a":1}, "a", 1),
+        ({"a":1, "b": 2}, "a", 1),
+        ({"a":1, "b": 2}, "b", 2),
+        ({"a":1, "b": 2}, "c", KeyError),
+        ({"a": {"b": 2}}, "a", {"b": 2}),
+        ({"a": {"b": 2}}, "a.b", 2),
+        ({"a": {"b": [1, 2]}}, "a.b", [1, 2]),
+    ]
+    for (d, k, res) in test_cases:
+        config = Config(Context(), InnerJsonLayer(d))
         assert is_expected_getitem(config, k, res)
