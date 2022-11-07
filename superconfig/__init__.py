@@ -1,6 +1,6 @@
 """Configuration library."""
 
-# TODO(jmyounker): Rename DictLayer to JsonLayer
+# TODO(jmyounker): Rename JsonLayer to JsonLayer
 # TODO(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add PropertyFileLayer
 # TODO(jmyounker): Add IniFileLayer
@@ -15,7 +15,7 @@
 from .config import Config
 from .config import Context
 from .config import layered_config
-from .statics import DictLayer
+from .statics import JsonLayer
 from .smarts import CacheLayer
 from .smarts import Constant
 from .smarts import Counter

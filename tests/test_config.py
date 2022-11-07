@@ -2,7 +2,7 @@ from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
 from superconfig import Config
-from superconfig import DictLayer
+from superconfig import JsonLayer
 from superconfig import Context
 
 
@@ -18,7 +18,7 @@ def test_getitem():
         ({"a": {"b": 1}}, "c", KeyError),
     ]
     for (d, k, res) in test_cases:
-        config = Config(Context(), DictLayer(d))
+        config = Config(Context(), JsonLayer(d))
         assert is_expected_getitem(config, k, res)
 
 
@@ -39,7 +39,7 @@ def test_get():
         ({"a": {"b": 1}}, "c", 3, 3),
     ]
     for (d, k, default, res) in test_cases:
-        config = Config(Context(), DictLayer(d))
+        config = Config(Context(), JsonLayer(d))
         assert config.get(k, default) == res
 
 
@@ -60,7 +60,7 @@ def test_layering_getitem():
     for (layers, k, res) in test_cases:
         layer_cake = LayerCake()
         for layer in layers:
-            layer_cake.push(DictLayer(layer))
+            layer_cake.push(JsonLayer(layer))
         config = Config(Context(), layer_cake)
         assert is_expected_getitem(config, k, res)
 
@@ -74,5 +74,5 @@ def test_layered_config():
         ([{"a": 1}, {"a": 2, "b": 3}], "c", KeyError),
     ]
     for (layers, k, res) in test_cases:
-        config = layered_config(Context(), [DictLayer(x) for x in layers])
+        config = layered_config(Context(), [JsonLayer(x) for x in layers])
         assert is_expected_getitem(config, k, res)

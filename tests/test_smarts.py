@@ -189,7 +189,7 @@ def test_expansion_layer():
                 },
             ),
             sc.SmartLayer({}),
-            sc.DictLayer({"f": "foo", "g": "bar", "h": { "i": "baz"}}),
+            sc.JsonLayer({"f": "foo", "g": "bar", "h": { "i": "baz"}}),
         ]
     )
     for k, res in [
@@ -203,7 +203,7 @@ def test_expansion_layer():
 def test_graft():
     c = sc.layered_config(sc.Context(), [
             sc.SmartLayer({
-                "a": sc.Graft(sc.DictLayer({"b": 1, "c": 2})),
+                "a": sc.Graft(sc.JsonLayer({"b": 1, "c": 2})),
                 "a.b.d": sc.Constant(4)
             }),
         ]
@@ -267,7 +267,7 @@ def test_cache_records_have_distinct_expirations():
 
 
 def test_file_load_layer_file_missing(tmp_path):
-    c = sc.layered_config([sc.LayerLoader(sc.DictLayer.from_file, str(tmp_path / "foo.json"))])
+    c = sc.layered_config([sc.LayerLoader(sc.JsonLayer.from_file, str(tmp_path / "foo.json"))])
     with pytest.raises(KeyError):
         _ = c["a"]
 
@@ -275,7 +275,7 @@ def test_file_load_layer_file_missing(tmp_path):
 def test_file_load_layer_loads_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
-    c = sc.layered_config(sc.Context(), [sc.LayerLoader(sc.DictLayer.from_file, str(f))])
+    c = sc.layered_config(sc.Context(), [sc.LayerLoader(sc.JsonLayer.from_file, str(f))])
     assert c["a"] == 1
 
 
@@ -286,7 +286,7 @@ def test_file_load_layer_does_not_reload_during_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.LayerLoader(
-            sc.DictLayer.from_file,
+            sc.JsonLayer.from_file,
             str(f),
             check_period_s=check_period_s,
         )])
@@ -302,7 +302,7 @@ def test_file_load_layer_does_not_load_unchanged_files(tmp_path):
 
     def load_checking_loader(f):
         loaded[0] = True
-        return sc.DictLayer.from_file(f)
+        return sc.JsonLayer.from_file(f)
 
     check_period_s = 3
     now = datetime.datetime.now()
@@ -330,7 +330,7 @@ def test_file_load_layer_loads_changed_files_after_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.LayerLoader(
-            sc.DictLayer.from_file,
+            sc.JsonLayer.from_file,
             str(f),
             check_period_s=check_period_s,
         )])
@@ -348,7 +348,7 @@ def test_file_load_layer_w_clear_clears_config_after_file_removed(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.LayerLoader(
-            sc.DictLayer.from_file,
+            sc.JsonLayer.from_file,
             str(f),
             check_period_s=check_period_s,
             clear_on_not_found=True,
@@ -368,7 +368,7 @@ def test_file_load_layer_wo_clear_keeps_config_after_file_removal(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.LayerLoader(
-            sc.DictLayer.from_file,
+            sc.JsonLayer.from_file,
             str(f),
             check_period_s=check_period_s,
         )])

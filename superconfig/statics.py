@@ -7,7 +7,7 @@ from typing import Any
 from . import config
 
 
-class DictLayer(config.Layer):
+class JsonLayer(config.Layer):
     def __init__(self, data):
         self.data = data
 
