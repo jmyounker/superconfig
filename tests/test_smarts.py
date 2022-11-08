@@ -267,7 +267,7 @@ def test_cache_records_have_distinct_expirations():
 
 
 def test_file_load_layer_file_missing(tmp_path):
-    c = sc.layered_config([sc.LayerLoader(sc.JsonLayer.from_file, str(tmp_path / "foo.json"))])
+    c = sc.layered_config([sc.FileLayerLoader(sc.JsonLayer.from_file, str(tmp_path / "foo.json"))])
     with pytest.raises(KeyError):
         _ = c["a"]
 
@@ -275,7 +275,7 @@ def test_file_load_layer_file_missing(tmp_path):
 def test_file_load_layer_loads_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
-    c = sc.layered_config(sc.Context(), [sc.LayerLoader(sc.JsonLayer.from_file, str(f))])
+    c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(sc.JsonLayer.from_file, str(f))])
     assert c["a"] == 1
 
 
@@ -285,10 +285,10 @@ def test_file_load_layer_does_not_reload_during_cache_period(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.LayerLoader(
+        sc.FileLayerLoader(
             sc.JsonLayer.from_file,
             str(f),
-            check_period_s=check_period_s,
+            refresh_interval_s=check_period_s,
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -309,10 +309,10 @@ def test_file_load_layer_does_not_load_unchanged_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.LayerLoader(
+        sc.FileLayerLoader(
             load_checking_loader,
             str(f),
-            check_period_s=check_period_s,
+            refresh_interval_s=check_period_s,
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -329,10 +329,10 @@ def test_file_load_layer_loads_changed_files_after_cache_period(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.LayerLoader(
+        sc.FileLayerLoader(
             sc.JsonLayer.from_file,
             str(f),
-            check_period_s=check_period_s,
+            refresh_interval_s=check_period_s,
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -347,10 +347,10 @@ def test_file_load_layer_w_clear_clears_config_after_file_removed(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.LayerLoader(
+        sc.FileLayerLoader(
             sc.JsonLayer.from_file,
             str(f),
-            check_period_s=check_period_s,
+            refresh_interval_s=check_period_s,
             clear_on_not_found=True,
         )])
     with freezegun.freeze_time(now):
@@ -367,10 +367,10 @@ def test_file_load_layer_wo_clear_keeps_config_after_file_removal(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.LayerLoader(
+        sc.FileLayerLoader(
             sc.JsonLayer.from_file,
             str(f),
-            check_period_s=check_period_s,
+            refresh_interval_s=check_period_s,
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1

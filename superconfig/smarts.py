@@ -200,44 +200,24 @@ class CacheLayer:
         return resp
 
 
-class LayerLoader:
+class FileLayerLoader:
     def __init__(
             self,
             layer_constructor,
             filename,
-            check_period_s=10,
-            failed_retry_period_s=5,
+            refresh_interval_s=10,
+            retry_interval_s=5,
             clear_on_not_found=False
     ):
         self.layer_constructor = layer_constructor
-        self.filename = filename
-        self.check_interval_s = check_period_s
-        self.failed_retry_interval_s = failed_retry_period_s
-        self.layer = config.NullLayer
-        self.next_refresh_time = 0
-        self.last_successful_load_time = 0
-        self.last_mtime = 0
-        self.clear_on_not_found = clear_on_not_found
+        self.auto_loader = config.AutoRefreshGetter(
+            layer_factory=layer_constructor,
+            loader=config.FileFetcher(filename),
+            refresh_interval_s=refresh_interval_s,
+            retry_interval_s=retry_interval_s,
+            clear_on_fetch_failure=clear_on_not_found,
+            clear_on_load_failure=clear_on_not_found,
+        )
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
-        now = time.time()
-        if self.next_refresh_time > now:
-            return self.layer.get_item(key, context, lower_layer)
-        try:
-            s = os.stat(self.filename)
-            if s.st_mtime <= self.last_mtime:
-                return self.layer.get_item(key, context, lower_layer)
-            with open(self.filename, 'rb') as f:
-                self.layer = self.layer_constructor(f)
-            self.last_successful_load_time = now
-            self.last_mtime = s.st_mtime
-            self.next_refresh_time = now + self.check_interval_s
-            return self.layer.get_item(key, context, lower_layer)
-        except FileNotFoundError:
-            if self.clear_on_not_found:
-                self.layer = config.NullLayer
-                self.next_refresh_time = now + self.failed_retry_interval_s
-            return self.layer.get_item(key, context, lower_layer)
-        except Exception:
-            self.next_refresh_time = now + self.failed_retry_interval_s
-            return self.layer.get_item(key, context, lower_layer)
+        return self.auto_loader.read("", key.split("."), context, lower_layer)
