@@ -135,10 +135,8 @@ def test_secmgr_load_single_value_string():
                 sc.SmartLayer(
                     {
                         "a.b": sc.AutoRefreshGetter(
-                            layer_constructor=sc.construct(
-                                sc.ConstantLayer,
-                                sc.string_from_bytes(sc.bytes_from_file, encoding='utf8')
-                            ),
+                            layer_constructor=lambda f: sc.ConstantLayer(
+                                sc.string_from_bytes(sc.bytes_from_file(f), encoding='utf8')),
                             fetcher=sc.SecretsManagerFetcher(),
                         )
                     }
@@ -161,9 +159,7 @@ def test_secmgr_load_single_value_binary():
             sc.SmartLayer(
                 {
                     "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=sc.construct(
-                            sc.ConstantLayer,
-                            sc.bytes_from_file),
+                        layer_constructor=lambda f: sc.ConstantLayer(sc.bytes_from_file(f)),
                         fetcher=sc.SecretsManagerFetcher(),
                     )
                 }
