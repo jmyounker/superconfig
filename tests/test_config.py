@@ -5,6 +5,7 @@ from superconfig import Config
 from superconfig import JsonLayer
 from superconfig import InnerJsonLayer
 from superconfig import Context
+from superconfig import ConstantLayer
 
 
 def test_getitem():
@@ -93,3 +94,10 @@ def test_inner_json_layer():
     for (d, k, res) in test_cases:
         config = Config(Context(), InnerJsonLayer(d))
         assert is_expected_getitem(config, k, res)
+
+
+def test_constant_layer():
+    config = Config(Context(), ConstantLayer(1))
+    assert is_expected_getitem(config, "", 1)
+    assert is_expected_getitem(config, "a", 1)
+    assert is_expected_getitem(config, "a.b", 1)

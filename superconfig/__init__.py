@@ -10,10 +10,11 @@
 # TODO(jmyounker): Add AwsFeatureFlagsLoader
 # TODO(jmyounker): Add RemapGetter
 # TODO(jmyounker): Add logging
-# TODO(jmyounker): Split out requirements-dev.txt file
+# DONE(jmyounker): Split out requirements-dev.txt file
 
 from .config import Config
 from .config import Context
+from .config import ConstantLayer
 from .config import layered_config
 from .loaders import AutoRefreshGetter
 from .loaders import FetchFailure

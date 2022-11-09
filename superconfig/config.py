@@ -121,3 +121,19 @@ class NullLayer(Layer):
     @classmethod
     def get_item(cls, key, context, lower_layer):
         return ReadResult.NotFound, Continue.Go, None
+
+
+class ConstantLayer(Layer):
+    """Any key returns a constant value.
+
+    This is used in combination with Grafts to produce a single value.
+    It's also useful when combined with LoadedLayers. You could produce
+    the same effect by a SmartLayer with a ConstantGetter stored the
+    root.
+
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def get_item(self, key, context, lower_layer):
+        return ReadResult.Found, Continue.Go, self.value
