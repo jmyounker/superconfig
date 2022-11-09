@@ -49,9 +49,9 @@ class AutoRefreshGetter:
 
     def read(self, key, rest, context, lower_layer):
         now = time.time()
-        if not self.load_required(now, key, rest, context, lower_layer):
-            return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
         try:
+            if not self.load_required(now, key, rest, context, lower_layer):
+                return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
             if self.fetcher.is_enabled(key, rest, context, lower_layer):
                 with self.fetcher.load(now, key, rest, context, lower_layer) as f:
                     self.loaded_layer = self.layer_constructor(f)
@@ -186,8 +186,8 @@ class FileLayerLoader:
     ):
         self.layer_constructor = layer_constructor
         self.auto_loader = AutoRefreshGetter(
-            layer_factory=layer_constructor,
-            loader=FileFetcher(filename),
+            layer_constructor=layer_constructor,
+            fetcher=FileFetcher(filename),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
             clear_on_fetch_failure=clear_on_not_found,
