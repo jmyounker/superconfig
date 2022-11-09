@@ -10,7 +10,6 @@ import config
 
 from typing import Any
 from typing import AnyStr
-from typing import Optional
 from typing import Tuple
 
 
@@ -54,7 +53,7 @@ class AutoRefreshGetter:
             return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
         try:
             if self.fetcher.is_enabled(key, rest, context, lower_layer):
-                with self.fetcher.load(key, rest, context, lower_layer) as f:
+                with self.fetcher.load(now, key, rest, context, lower_layer) as f:
                     self.loaded_layer = self.layer_constructor(f)
                 self.last_successful_load = now
                 self.next_load_s += now + self.refresh_interval_s
@@ -94,7 +93,7 @@ class AbstractFetcher:
 
 
 class SecretsManagerFetcher(AbstractFetcher):
-    def __init__(self, name, client=None, stage=None):
+    def __init__(self, name=None, client=None, stage=None):
         self._client = client
         self._name = name
         self._stage = stage
@@ -108,12 +107,13 @@ class SecretsManagerFetcher(AbstractFetcher):
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
         try:
-            yield io.BytesIO(self.load_secret(self.get_client(), self.name(key), self.stage()).encode('utf8'))
-        except Exception:
+            yield io.BytesIO(self.value_from_secret(
+                self.get_secret(self.get_client(), self.name(key), self.stage())))
+        except Exception as e:
             raise FetchFailure()
 
     def get_client(self):
-        if not self._client:
+        if self._client:
             return self._client
         return boto3.client("secretsmanager")
 
@@ -121,20 +121,29 @@ class SecretsManagerFetcher(AbstractFetcher):
         if self._name:
             return self._name
         else:
-            return ".".join(key)
+            return key
 
     def stage(self):
         return self._stage
 
     @staticmethod
-    def load_secret(client, name, stage):
+    def get_secret(client, name, stage):
         kwargs = {'SecretId': name}
         if stage is not None:
             kwargs['VersionStage'] = stage
         try:
             return client.get_secret_value(**kwargs)
-        except Exception:
+        except Exception as e:
             raise FetchFailure()
+
+    @staticmethod
+    def value_from_secret(secret):
+        if 'SecretString' in secret:
+            return bytes(secret['SecretString'].encode('utf8'))
+        elif 'SecretBinary' in secret:
+            return secret['SecretBinary']
+        else:
+            raise FetchFailure("cannot extract value: neither SecretString nor SecretBinary found")
 
 
 class FileFetcher(AbstractFetcher):
@@ -176,9 +185,9 @@ class FileLayerLoader:
             clear_on_not_found=False
     ):
         self.layer_constructor = layer_constructor
-        self.auto_loader = config.AutoRefreshGetter(
+        self.auto_loader = AutoRefreshGetter(
             layer_factory=layer_constructor,
-            loader=config.FileFetcher(filename),
+            loader=FileFetcher(filename),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
             clear_on_fetch_failure=clear_on_not_found,
