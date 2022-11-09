@@ -39,17 +39,17 @@ def construct(f, transform):
     return lambda x, f=f, transform=transform: f(transform(x))
 
 
-def string_from_file(encoding='utf8'):
-    def _string_from_file(x, encoding=encoding):
+def string_from_bytes(transform, encoding='utf8'):
+    def _string_from_file(x, transform=transform, encoding=encoding):
         try:
-            return x.read().decode(encoding)
+            return transform(x).decode(encoding)
         except:
             raise LoadFailure()
     return _string_from_file
 
 
-def bytes_from_file():
-    return lambda x: x.read()
+def bytes_from_file(x):
+    return x.read()
 
 
 def obj_from_json(transform):

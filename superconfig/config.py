@@ -137,11 +137,3 @@ class ConstantLayer(Layer):
 
     def get_item(self, key, context, lower_layer):
         return ReadResult.Found, Continue.Go, self.value
-
-    @classmethod
-    def from_file_as_string(cls, f, encoding='utf8'):
-        return cls(f.read().decode(encoding))
-
-    @classmethod
-    def from_file_as_bytes(cls, f):
-        return cls(f.read())

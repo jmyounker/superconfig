@@ -12,6 +12,8 @@ from typing import Any
 from typing import AnyStr
 from typing import Tuple
 
+import converters
+
 
 class AutoRefreshGetter:
     """Reloads layers when the data source changes.
@@ -67,7 +69,7 @@ class AutoRefreshGetter:
             if self.clear_on_fetch_failure:
                 self.loaded_layer = config.NullLayer
             self.next_load_s += now + self.retry_interval_s
-        except LoadFailure:
+        except converters.LoadFailure:
             if self.clear_on_load_failure:
                 self.loaded_layer = config.NullLayer
             self.next_load_s += now + self.retry_interval_s
