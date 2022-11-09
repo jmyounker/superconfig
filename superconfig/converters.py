@@ -30,7 +30,6 @@ import json
 import binascii
 
 
-
 class LoadFailure(Exception):
     pass
 
