@@ -7,20 +7,20 @@ import pytest
 import superconfig as sc
 
 
-def test_file_load_layer_file_missing(tmp_path):
+def test_file_layer_loader_file_missing(tmp_path):
     c = sc.layered_config([sc.FileLayerLoader(sc.JsonLayer.from_file, str(tmp_path / "foo.json"))])
     with pytest.raises(KeyError):
         _ = c["a"]
 
 
-def test_file_load_layer_loads_files(tmp_path):
+def test_file_layer_loader_loads_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(sc.JsonLayer.from_file, str(f))])
     assert c["a"] == 1
 
 
-def test_file_load_layer_does_not_reload_during_cache_period(tmp_path):
+def test_file_layer_loader_does_not_reload_during_cache_period(tmp_path):
     check_period_s = 3
     now = datetime.datetime.now()
     f = tmp_path / "foo.json"
@@ -38,7 +38,7 @@ def test_file_load_layer_does_not_reload_during_cache_period(tmp_path):
         assert c["a"] == 1
 
 
-def test_file_load_layer_does_not_load_unchanged_files(tmp_path):
+def test_file_layer_loader_does_not_load_unchanged_files(tmp_path):
     loaded = [False]
 
     def load_checking_loader(f):
@@ -64,7 +64,7 @@ def test_file_load_layer_does_not_load_unchanged_files(tmp_path):
         assert not loaded[0]
 
 
-def test_file_load_layer_loads_changed_files_after_cache_period(tmp_path):
+def test_file_layer_loader_loads_changed_files_after_cache_period(tmp_path):
     check_period_s = 3
     now = datetime.datetime.now()
     f = tmp_path / "foo.json"
@@ -82,7 +82,7 @@ def test_file_load_layer_loads_changed_files_after_cache_period(tmp_path):
         assert c["a"] == 2
 
 
-def test_file_load_layer_w_clear_clears_config_after_file_removed(tmp_path):
+def test_file_layer_loader_w_clear_clears_config_after_file_removed(tmp_path):
     check_period_s = 3
     now = datetime.datetime.now()
     f = tmp_path / "foo.json"
@@ -102,7 +102,7 @@ def test_file_load_layer_w_clear_clears_config_after_file_removed(tmp_path):
             _ = c["a"]
 
 
-def test_file_load_layer_wo_clear_keeps_config_after_file_removal(tmp_path):
+def test_file_layer_loader_wo_clear_keeps_config_after_file_removal(tmp_path):
     check_period_s = 3
     now = datetime.datetime.now()
     f = tmp_path / "foo.json"
