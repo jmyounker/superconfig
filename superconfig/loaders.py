@@ -34,7 +34,8 @@ class AutoRefreshGetter:
             fetcher,
             refresh_interval_s=60,
             retry_interval_s=10,
-            clear_on_fetch_failure=True,
+            clear_on_removal=True,
+            clear_on_fetch_failure=False,
             clear_on_load_failure=False,
     ):
         self.layer_constructor = layer_constructor
@@ -44,6 +45,7 @@ class AutoRefreshGetter:
         self.retry_interval_s = retry_interval_s
         self.next_load_s = 0
         self.last_successful_load = 0
+        self.clear_on_removal = clear_on_removal
         self.clear_on_fetch_failure = clear_on_fetch_failure
         self.clear_on_load_failure = clear_on_load_failure
 
@@ -57,6 +59,10 @@ class AutoRefreshGetter:
                     self.loaded_layer = self.layer_constructor(f)
                 self.last_successful_load = now
                 self.next_load_s += now + self.refresh_interval_s
+        except DataSourceMissing:
+            if self.clear_on_removal:
+                self.loaded_layer = config.NullLayer
+            self.next_load_s = now + self.retry_interval_s
         except FetchFailure:
             if self.clear_on_fetch_failure:
                 self.loaded_layer = config.NullLayer
@@ -71,11 +77,11 @@ class AutoRefreshGetter:
         return self.next_load_s < now and self.fetcher.load_required(now, key, rest, context, lower_layer)
 
 
-class FetchFailure(Exception):
+class DataSourceMissing(Exception):
     pass
 
 
-class LoadFailure(Exception):
+class FetchFailure(Exception):
     pass
 
 
@@ -160,7 +166,7 @@ class FileFetcher(AbstractFetcher):
         try:
             return os.stat(self.filename).st_mtime > self.last_mtime
         except FileNotFoundError:
-            raise FetchFailure()
+            raise DataSourceMissing()
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
@@ -172,6 +178,8 @@ class FileFetcher(AbstractFetcher):
                 yield f
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
+            raise DataSourceMissing()
+        except IOError:
             raise FetchFailure()
 
 
@@ -182,7 +190,9 @@ class FileLayerLoader:
             filename,
             refresh_interval_s=10,
             retry_interval_s=5,
-            clear_on_not_found=False
+            clear_on_removal=False,
+            clear_on_fetch_failure=False,
+            clear_on_load_failure=False,
     ):
         self.layer_constructor = layer_constructor
         self.auto_loader = AutoRefreshGetter(
@@ -190,8 +200,9 @@ class FileLayerLoader:
             fetcher=FileFetcher(filename),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
-            clear_on_fetch_failure=clear_on_not_found,
-            clear_on_load_failure=clear_on_not_found,
+            clear_on_removal=clear_on_removal,
+            clear_on_fetch_failure=clear_on_fetch_failure,
+            clear_on_load_failure=clear_on_load_failure,
         )
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:

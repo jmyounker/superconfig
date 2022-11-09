@@ -94,7 +94,7 @@ def test_file_layer_loader_w_clear_clears_config_after_file_removed(tmp_path):
             sc.JsonLayer.from_file,
             str(f),
             refresh_interval_s=check_period_s,
-            clear_on_not_found=True,
+            clear_on_removal=True,
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
