@@ -164,3 +164,26 @@ class FileFetcher(AbstractFetcher):
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
             raise FetchFailure()
+
+
+class FileLayerLoader:
+    def __init__(
+            self,
+            layer_constructor,
+            filename,
+            refresh_interval_s=10,
+            retry_interval_s=5,
+            clear_on_not_found=False
+    ):
+        self.layer_constructor = layer_constructor
+        self.auto_loader = config.AutoRefreshGetter(
+            layer_factory=layer_constructor,
+            loader=config.FileFetcher(filename),
+            refresh_interval_s=refresh_interval_s,
+            retry_interval_s=retry_interval_s,
+            clear_on_fetch_failure=clear_on_not_found,
+            clear_on_load_failure=clear_on_not_found,
+        )
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
+        return self.auto_loader.read("", key.split("."), context, lower_layer)

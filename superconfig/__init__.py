@@ -18,6 +18,7 @@ from .config import layered_config
 from .loaders import AutoRefreshGetter
 from .loaders import FetchFailure
 from .loaders import FileFetcher
+from .loaders import FileLayerLoader
 from .loaders import LoadFailure
 from .loaders import SecretsManagerFetcher
 from .statics import JsonLayer
@@ -30,7 +31,6 @@ from .smarts import Getter
 from .smarts import GetterStack
 from .smarts import Graft
 from .smarts import KeyExpansionLayer
-from .smarts import FileLayerLoader
 from .smarts import NotFound
 from .smarts import SmartLayer
 from .smarts import Stop
