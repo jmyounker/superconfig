@@ -39,6 +39,7 @@ class AutoRefreshGetter:
             clear_on_removal=True,
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
+            is_enabled=None
     ):
         self.layer_constructor = layer_constructor
         self.fetcher = fetcher
@@ -50,13 +51,15 @@ class AutoRefreshGetter:
         self.clear_on_removal = clear_on_removal
         self.clear_on_fetch_failure = clear_on_fetch_failure
         self.clear_on_load_failure = clear_on_load_failure
+        if is_enabled is not None:
+            self.is_enabled = is_enabled
 
     def read(self, key, rest, context, lower_layer):
         now = time.time()
         try:
             if not self.load_required(now, key, rest, context, lower_layer):
                 return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
-            if self.fetcher.is_enabled(key, rest, context, lower_layer):
+            if self.is_enabled(key, rest, context, lower_layer):
                 with self.fetcher.load(now, key, rest, context, lower_layer) as f:
                     self.loaded_layer = self.layer_constructor(f)
                 self.last_successful_load = now
@@ -78,6 +81,8 @@ class AutoRefreshGetter:
     def load_required(self, now, key, rest, context, lower_layer):
         return self.next_load_s < now and self.fetcher.load_required(now, key, rest, context, lower_layer)
 
+    def is_enabled(self, key, rest, context, lower_layer):
+        return True
 
 class DataSourceMissing(Exception):
     pass
@@ -105,9 +110,6 @@ class SecretsManagerFetcher(AbstractFetcher):
         self._client = client
         self._name = name
         self._stage = stage
-
-    def is_enabled(self, key, rest, context, lower_layer):
-        return True
 
     def load_required(self, now, key, rest, context, lower_layer):
         return True
@@ -159,9 +161,6 @@ class FileFetcher(AbstractFetcher):
         self.filename = filename
         self.last_mtime = 0
 
-    def is_enabled(self, key, rest, context, lower_layer):
-        return True
-
     def load_required(self, now, key, rest, context, lower_layer):
         if not self.last_mtime:
             return True
@@ -192,6 +191,7 @@ class FileLayerLoader:
             filename,
             refresh_interval_s=10,
             retry_interval_s=5,
+            is_enabled=None,
             clear_on_removal=False,
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
@@ -202,10 +202,21 @@ class FileLayerLoader:
             fetcher=FileFetcher(filename),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
+            is_enabled=is_enabled,
             clear_on_removal=clear_on_removal,
             clear_on_fetch_failure=clear_on_fetch_failure,
             clear_on_load_failure=clear_on_load_failure,
         )
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
+    def get_item(self, key, context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
         return self.auto_loader.read("", key.split("."), context, lower_layer)
+
+
+def config_switch(enable_key, default=False):
+    def _config_switch(key, rest, context, lower_layer, enable_key=enable_key, default=default):
+        found, _, value = lower_layer.get_item(enable_key, context, config.NullLayer)
+        if found == config.ReadResult.Found:
+            return bool(value)
+        else:
+            return default
+    return _config_switch

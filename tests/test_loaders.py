@@ -167,3 +167,56 @@ def test_secmgr_load_single_value_binary():
         ]
     )
     assert c["a.b"] == "foo".encode('utf8')
+
+
+def test_autoload_enabled_when_true(tmp_path):
+    check_period_s = 3
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.FileLayerLoader(
+            sc.JsonLayer.from_file,
+            str(f),
+            refresh_interval_s=check_period_s,
+            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+        ),
+        sc.SmartLayer({
+            "sc.file_layer.is_enabled": sc.Constant(True),
+        }),
+    ])
+    assert c["a"] == 1
+
+
+def test_autoload_disabled_when_false(tmp_path):
+    check_period_s = 3
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.FileLayerLoader(
+            sc.JsonLayer.from_file,
+            str(f),
+            refresh_interval_s=check_period_s,
+            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+        ),
+        sc.SmartLayer({
+            "sc.file_layer.is_enabled": sc.Constant(False),
+        }),
+    ])
+    with pytest.raises(KeyError):
+        _ = c["a"]
+
+
+def test_autoload_disabled_when_missing(tmp_path):
+    check_period_s = 3
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.FileLayerLoader(
+            sc.JsonLayer.from_file,
+            str(f),
+            refresh_interval_s=check_period_s,
+            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+        ),
+    ])
+    with pytest.raises(KeyError):
+        _ = c["a"]

@@ -13,7 +13,7 @@
 # TODO(jmyounker): Add converters
 # TODO(jmyounker): Test converters
 # TODO(jmyounker): Add path expansion to AwsSecretsManagerLoader
-# TODO(jmyounker): Add is_enabled to AwsSecretsManagerLoader
+# DONE(jmyounker): Add is_enabled to AwsSecretsManagerLoader
 # DONE(jmyounker): Split out requirements-dev.txt file
 
 from .config import Config
@@ -26,6 +26,7 @@ from .converters import LoadFailure
 from .converters import obj_from_json
 from .converters import string_from_bytes
 from .loaders import AutoRefreshGetter
+from .loaders import config_switch
 from .loaders import FetchFailure
 from .loaders import FileFetcher
 from .loaders import FileLayerLoader
