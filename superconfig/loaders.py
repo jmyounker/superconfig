@@ -130,10 +130,9 @@ class SecretsManagerFetcher(AbstractFetcher):
         return boto3.client("secretsmanager")
 
     def name(self, key, context, lower_layer):
-        if self._name:
-            return self._name.expand(context, lower_layer)
-        else:
+        if self._name is None:
             return key
+        return self._name.expand(context, lower_layer)
 
     def stage(self):
         return self._stage
