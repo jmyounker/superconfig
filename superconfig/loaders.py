@@ -168,7 +168,7 @@ class FileFetcher(AbstractFetcher):
         # these two calls.
         filename = self.name.expand(context, lower_layer)
         if filename is None:
-            raise NotImplementedError
+            raise FetchFailure()
         self.filename = filename
         if not self.last_mtime:
             return True

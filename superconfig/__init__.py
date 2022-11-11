@@ -13,7 +13,7 @@
 # TODO(jmyounker): Add logging
 # TODO(jmyounker): Add converters
 # TODO(jmyounker): Test converters
-# TODO(jmyounker): Test loader expansions
+# DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
 # DONE(jmyounker): Add is_enabled to AwsSecretsManagerLoader
 # DONE(jmyounker): Split out requirements-dev.txt file

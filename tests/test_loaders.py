@@ -169,6 +169,91 @@ def test_secmgr_load_single_value_binary():
     assert c["a.b"] == "foo".encode('utf8')
 
 
+@moto.mock_secretsmanager
+def test_secmgr_load_from_static_name():
+    sm = boto3.client("secretsmanager")
+    sm.create_secret(
+        Name='c.d',
+        SecretString='foo',
+    )
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer(
+                {
+                    "a.b": sc.AutoRefreshGetter(
+                        layer_constructor=lambda f: sc.ConstantLayer(
+                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                        fetcher=sc.SecretsManagerFetcher(
+                            name="c.d"
+                        ),
+                    )
+                }
+            ),
+        ]
+    )
+    assert c["a.b"] == "foo"
+
+
+@moto.mock_secretsmanager
+def test_secmgr_load_from_name_template():
+    sm = boto3.client("secretsmanager")
+    sm.create_secret(
+        Name='c-prod',
+        SecretString='foo',
+    )
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer(
+                {
+                    "a.b": sc.AutoRefreshGetter(
+                        layer_constructor=lambda f: sc.ConstantLayer(
+                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                        fetcher=sc.SecretsManagerFetcher(
+                            name="c-{env}"
+                        ),
+                    )
+                }
+            ),
+            sc.SmartLayer({
+                "env": sc.Constant("prod"),
+            }),
+        ]
+    )
+    assert c["a.b"] == "foo"
+
+
+@moto.mock_secretsmanager
+def test_secmgr_load_from_name_template_fails():
+    sm = boto3.client("secretsmanager")
+    sm.create_secret(
+        Name='c-you-wont-find-this',
+        SecretString='foo',
+    )
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer(
+                {
+                    "a.b": sc.AutoRefreshGetter(
+                        layer_constructor=lambda f: sc.ConstantLayer(
+                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                        fetcher=sc.SecretsManagerFetcher(
+                            name="c-{env}"
+                        ),
+                    )
+                }
+            ),
+            sc.SmartLayer({
+                "env": sc.Constant("prod"),
+            }),
+        ]
+    )
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
+
+
 def test_autoload_enabled_when_true(tmp_path):
     check_period_s = 3
     f = tmp_path / "foo.json"
@@ -220,3 +305,36 @@ def test_autoload_disabled_when_missing(tmp_path):
     ])
     with pytest.raises(KeyError):
         _ = c["a"]
+
+
+def test_autoload_filename_expansion_works(tmp_path):
+    check_period_s = 3
+    f = tmp_path / "foo-prod.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.FileLayerLoader(
+            sc.JsonLayer.from_file,
+            str(tmp_path / "foo-{env}.json"),
+            refresh_interval_s=check_period_s,
+        ),
+        sc.SmartLayer({
+            "env": sc.Constant("prod"),
+        }),
+    ])
+    assert c["a"] == 1
+
+
+def test_autoload_filename_expansion_fails(tmp_path):
+    check_period_s = 3
+    f = tmp_path / "foo-prod.json"
+    f.write_text(json.dumps({"a": 1}))
+    c = sc.layered_config(sc.Context(), [
+        sc.FileLayerLoader(
+            sc.JsonLayer.from_file,
+            str(tmp_path / "foo-{env}.json"),
+            refresh_interval_s=check_period_s,
+        ),
+    ])
+    with pytest.raises(KeyError):
+        _ = c["a"]
+
