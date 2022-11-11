@@ -50,13 +50,14 @@ class AutoRefreshGetter:
         self.clear_on_removal = clear_on_removal
         self.clear_on_fetch_failure = clear_on_fetch_failure
         self.clear_on_load_failure = clear_on_load_failure
-        if is_enabled is not None:
-            self.is_enabled = is_enabled
+        self.is_enabled = is_enabled or self.always_enabled
 
     def read(self, key, rest, context, lower_layer):
         now = time.time()
+        if self.next_load_s >= now:
+            return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
         try:
-            if not self.load_required(now, key, rest, context, lower_layer):
+            if not self.fetcher.load_required(now, key, rest, context, lower_layer):
                 return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
             if self.is_enabled(key, rest, context, lower_layer):
                 with self.fetcher.load(now, key, rest, context, lower_layer) as f:
@@ -77,11 +78,10 @@ class AutoRefreshGetter:
             self.next_load_s += now + self.retry_interval_s
         return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
 
-    def load_required(self, now, key, rest, context, lower_layer):
-        return self.next_load_s < now and self.fetcher.load_required(now, key, rest, context, lower_layer)
-
-    def is_enabled(self, key, rest, context, lower_layer):
+    @staticmethod
+    def always_enabled(key, rest, context, lower_layer):
         return True
+
 
 class DataSourceMissing(Exception):
     pass
