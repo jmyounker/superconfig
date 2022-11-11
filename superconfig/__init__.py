@@ -4,14 +4,13 @@
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
 # TODO(jmyounker): Add PropertyFileLayer
-# TODO(jmyounker): Add IniFileLayer
-# TODO(jmyounker): Add YamlLayer
-# TODO(jmyounker): Add InnerYamlLayer
+# TODO(jmyounker): Add Toml converter
+# TODO(jmyounker): Add IniFile converter
+# TODO(jmyounker): Add Yaml converter
 # DONE(jmyounker): Add AwsSecretsManagerLoader
 # TODO(jmyounker): Add AwsFeatureFlagsLoader
 # TODO(jmyounker): Add RemapGetter
 # TODO(jmyounker): Add logging
-# TODO(jmyounker): Add converters
 # TODO(jmyounker): Test converters
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
