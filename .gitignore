@@ -1,0 +1,7 @@
+.envrc
+.idea
+.pyenv
+.python-version
+.pytest_cache
+*.pyc
+*.orig
