@@ -5,6 +5,15 @@ from typing import Optional
 import config
 
 
+class ExpandableString:
+    def __init__(self, name):
+        self.name = name
+        self.expansions = expansions(name)
+
+    def expand(self, context: config.Context, lower_layer: config.Layer) -> Optional[AnyStr]:
+        return expand(self.name, self.expansions, context, lower_layer)
+
+
 expansions_ptrn = re.compile(r"\{([^}]+)}")
 
 

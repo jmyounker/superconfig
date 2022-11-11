@@ -107,7 +107,7 @@ class AbstractFetcher:
 class SecretsManagerFetcher(AbstractFetcher):
     def __init__(self, name=None, client=None, stage=None):
         self._client = client
-        self._name = name
+        self._name = None if name is None else helpers.ExpandableString(name)
         self._stage = stage
 
     def load_required(self, now, key, rest, context, lower_layer):
@@ -117,7 +117,10 @@ class SecretsManagerFetcher(AbstractFetcher):
     def load(self, now, key, rest, context, lower_layer):
         try:
             yield io.BytesIO(self.value_from_secret(
-                self.get_secret(self.get_client(), self.name(key), self.stage())))
+                self.get_secret(
+                    self.get_client(),
+                    self.name(key, context, lower_layer),
+                    self.stage())))
         except Exception as e:
             raise FetchFailure()
 
@@ -126,9 +129,9 @@ class SecretsManagerFetcher(AbstractFetcher):
             return self._client
         return boto3.client("secretsmanager")
 
-    def name(self, key):
+    def name(self, key, context, lower_layer):
         if self._name:
-            return self._name
+            return self._name.expand(context, lower_layer)
         else:
             return key
 
@@ -157,15 +160,14 @@ class SecretsManagerFetcher(AbstractFetcher):
 
 class FileFetcher(AbstractFetcher):
     def __init__(self, filename_tmpl):
-        self.filename_tmpl = filename_tmpl
-        self.expansions = helpers.expansions(filename_tmpl)
+        self.name = helpers.ExpandableString(filename_tmpl)
         self.filename = None
         self.last_mtime = 0
 
     def load_required(self, now, key, rest, context, lower_layer):
         # The expansion works because there is an implicit sequencing between
         # these two calls.
-        filename = helpers.expand(self.filename_tmpl, self.expansions, context, lower_layer)
+        filename = self.name.expand(context, lower_layer)
         if filename is None:
             raise NotImplementedError
         self.filename = filename
