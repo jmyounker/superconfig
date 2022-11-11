@@ -3,16 +3,15 @@ import io
 import os
 import time
 
-
 import boto3
 
 import config
 
 from typing import Any
-from typing import AnyStr
 from typing import Tuple
 
 import converters
+import helpers
 
 
 class AutoRefreshGetter:
@@ -157,11 +156,19 @@ class SecretsManagerFetcher(AbstractFetcher):
 
 
 class FileFetcher(AbstractFetcher):
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, filename_tmpl):
+        self.filename_tmpl = filename_tmpl
+        self.expansions = helpers.expansions(filename_tmpl)
+        self.filename = None
         self.last_mtime = 0
 
     def load_required(self, now, key, rest, context, lower_layer):
+        # The expansion works because there is an implicit sequencing between
+        # these two calls.
+        filename = helpers.expand(self.filename_tmpl, self.expansions, context, lower_layer)
+        if filename is None:
+            raise NotImplementedError
+        self.filename = filename
         if not self.last_mtime:
             return True
         try:

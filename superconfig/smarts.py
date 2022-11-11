@@ -155,20 +155,11 @@ class Counter(Getter):
 
 class KeyExpansionLayer(config.Layer):
 
-    expansions_ptrn = re.compile(r"\{([^}]+)}")
-
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
-        expansions = set(self.expansions_ptrn.findall(key))
-        replacements = []
-        for exp in expansions:
-            found, cont, v = lower_layer.get_item(exp, context, config.NullLayer)
-            if found == config.ReadResult.NotFound:
-                return found, config.Continue.Stop, v
-            replacements.append(('{%s}' % exp, v))
-        ke = key
-        for exp, v in replacements:
-            ke = ke.replace(exp, v)
-        return lower_layer.get_item(ke, context, config.NullLayer)
+        k = expand(key, expansions(key), context, lower_layer)
+        if k is None:
+            return config.ReadResult.NotFound, config.Continue.Go, None
+        return lower_layer.get_item(k, context, config.NullLayer)
 
 
 class Graft(Getter):
