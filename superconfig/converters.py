@@ -25,20 +25,24 @@ import json
 from typing import Any
 from typing import AnyStr
 
+try:
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader, Dumper
+
+import yaml
+
 
 class LoadFailure(Exception):
     pass
 
 
-def string_from_bytes(x: bytes, encoding='utf8') -> AnyStr:
+def obj_from_yaml(x: AnyStr) -> Any:
     try:
-        return x.decode(encoding)
-    except:
+        return yaml.load(x, Loader=Loader)
+    except Exception:
         raise LoadFailure()
-
-
-def bytes_from_file(x: io.BytesIO) -> bytes:
-    return x.read()
 
 
 def obj_from_json(x: AnyStr) -> Any:
@@ -46,6 +50,17 @@ def obj_from_json(x: AnyStr) -> Any:
         return json.loads(x)
     except Exception:
         raise LoadFailure()
+
+
+def string_from_bytes(x: bytes, encoding='utf8') -> AnyStr:
+    try:
+        return x.decode(encoding)
+    except Exception:
+        raise LoadFailure()
+
+
+def bytes_from_file(x: io.BytesIO) -> bytes:
+    return x.read()
 
 
 def bytes_from_base64(x: AnyStr) -> bytes:

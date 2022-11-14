@@ -337,4 +337,3 @@ def test_autoload_filename_expansion_fails(tmp_path):
     ])
     with pytest.raises(KeyError):
         _ = c["a"]
-

@@ -1,5 +1,6 @@
 import pytest
 
+
 def is_expected_getitem(config, key, res):
     if res is KeyError:
         with pytest.raises(KeyError):

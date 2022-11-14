@@ -25,6 +25,7 @@ from .converters import bytes_from_base64
 from .converters import bytes_from_file
 from .converters import LoadFailure
 from .converters import obj_from_json
+from .converters import obj_from_yaml
 from .converters import string_from_bytes
 from .helpers import expansions
 from .helpers import expand
