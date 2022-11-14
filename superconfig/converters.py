@@ -18,35 +18,37 @@ constructor:
 
 """
 
-import base64
-import json
-
 import binascii
+import base64
+import io
+import json
+from typing import Any
+from typing import AnyStr
 
 
 class LoadFailure(Exception):
     pass
 
 
-def string_from_bytes(x, encoding='utf8'):
+def string_from_bytes(x: bytes, encoding='utf8') -> AnyStr:
     try:
         return x.decode(encoding)
     except:
         raise LoadFailure()
 
 
-def bytes_from_file(x):
+def bytes_from_file(x: io.BytesIO) -> bytes:
     return x.read()
 
 
-def obj_from_json(x):
+def obj_from_json(x: AnyStr) -> Any:
     try:
         return json.loads(x)
     except Exception:
         raise LoadFailure()
 
 
-def bytes_from_base64(x):
+def bytes_from_base64(x: AnyStr) -> bytes:
     try:
         return base64.b64decode(x, validate=True)
     except binascii.Error:
