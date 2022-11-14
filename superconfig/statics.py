@@ -7,7 +7,7 @@ from typing import Any
 from . import config
 
 
-class JsonLayer(config.Layer):
+class ObjLayer(config.Layer):
     def __init__(self, data):
         self.data = data
 

@@ -35,7 +35,7 @@ from .loaders import FetchFailure
 from .loaders import FileFetcher
 from .loaders import FileLayerLoader
 from .loaders import SecretsManagerFetcher
-from .statics import JsonLayer
+from .statics import ObjLayer
 from .statics import InnerJsonLayer
 from .smarts import CacheLayer
 from .smarts import Constant

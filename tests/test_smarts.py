@@ -188,7 +188,7 @@ def test_expansion_layer():
                 },
             ),
             sc.SmartLayer({}),
-            sc.JsonLayer({"f": "foo", "g": "bar", "h": { "i": "baz"}}),
+            sc.ObjLayer({"f": "foo", "g": "bar", "h": {"i": "baz"}}),
         ]
     )
     for k, res in [
@@ -202,7 +202,7 @@ def test_expansion_layer():
 def test_graft():
     c = sc.layered_config(sc.Context(), [
             sc.SmartLayer({
-                "a": sc.Graft(sc.JsonLayer({"b": 1, "c": 2})),
+                "a": sc.Graft(sc.ObjLayer({"b": 1, "c": 2})),
                 "a.b.d": sc.Constant(4)
             }),
         ]

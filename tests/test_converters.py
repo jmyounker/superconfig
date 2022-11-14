@@ -6,7 +6,7 @@ from tests.helpers import is_expected_getitem
 
 def test_load_config_from_json_string():
     config = """{"a":{"b": 1}}"""
-    c = sc.Config(sc.Context(), sc.JsonLayer(sc.obj_from_json(config)))
+    c = sc.Config(sc.Context(), sc.ObjLayer(sc.obj_from_json(config)))
     assert is_expected_getitem(c, "a.b", 1)
 
 
@@ -22,7 +22,7 @@ a:
   b: 1
 
 """
-    c = sc.Config(sc.Context(), sc.JsonLayer(sc.obj_from_yaml(config)))
+    c = sc.Config(sc.Context(), sc.ObjLayer(sc.obj_from_yaml(config)))
     assert is_expected_getitem(c, "a.b", 1)
 
 
