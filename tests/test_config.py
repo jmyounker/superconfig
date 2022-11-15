@@ -3,7 +3,7 @@ from config import LayerCake
 from config import layered_config
 from superconfig import Config
 from superconfig import ObjLayer
-from superconfig import InnerJsonLayer
+from superconfig import InnerObjLayer
 from superconfig import Context
 from superconfig import ConstantLayer
 
@@ -80,7 +80,7 @@ def test_layered_config():
         assert is_expected_getitem(config, k, res)
 
 
-def test_inner_json_layer():
+def test_inner_obj_layer():
     test_cases = [
         ({}, "a", KeyError),
         ({"a":1}, "a", 1),
@@ -92,7 +92,7 @@ def test_inner_json_layer():
         ({"a": {"b": [1, 2]}}, "a.b", [1, 2]),
     ]
     for (d, k, res) in test_cases:
-        config = Config(Context(), InnerJsonLayer(d))
+        config = Config(Context(), InnerObjLayer(d))
         assert is_expected_getitem(config, k, res)
 
 

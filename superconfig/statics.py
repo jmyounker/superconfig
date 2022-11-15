@@ -32,7 +32,7 @@ class ObjLayer(config.Layer):
         return cls(json.load(f))
 
 
-class InnerJsonLayer(config.Layer):
+class InnerObjLayer(config.Layer):
     def __init__(self, data):
         self.data = data
 

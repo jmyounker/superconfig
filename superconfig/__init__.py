@@ -1,6 +1,7 @@
 """Configuration library."""
 
 # DONE(jmyounker): Rename JsonLayer to ObjLayer
+# TODO(jmyounker): Rename InnerJsonLayer to InnterObjLayer
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
 # TODO(jmyounker): Add PropertyFileLayer
@@ -13,6 +14,9 @@
 # TODO(jmyounker): Add logging
 # DONE(jmyounker): Test converters
 # TODO(jmyounker): Test low level converters
+# TODO(jmyounker): Unify loader operations into single context manager
+# TODO(jmyounker): Unify loader operations into single context manager
+# DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
 # DONE(jmyounker): Add is_enabled to AwsSecretsManagerLoader
@@ -37,7 +41,7 @@ from .loaders import FileFetcher
 from .loaders import FileLayerLoader
 from .loaders import SecretsManagerFetcher
 from .statics import ObjLayer
-from .statics import InnerJsonLayer
+from .statics import InnerObjLayer
 from .smarts import CacheLayer
 from .smarts import Constant
 from .smarts import Counter
