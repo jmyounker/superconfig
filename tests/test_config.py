@@ -1,9 +1,12 @@
+import pytest
+
 from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
-from superconfig import Config
+from superconfig import Config, LoadFailure
 from superconfig import ObjLayer
 from superconfig import InnerObjLayer
+from superconfig import IniLayer
 from superconfig import Context
 from superconfig import ConstantLayer
 
@@ -101,3 +104,23 @@ def test_constant_layer():
     assert is_expected_getitem(config, "", 1)
     assert is_expected_getitem(config, "a", 1)
     assert is_expected_getitem(config, "a.b", 1)
+
+
+def test_ini_layer():
+    test_cases = [
+        ("""# An INI file
+[a]
+  b: 1
+    
+    """, [("a", KeyError), ("a.b", "1")],
+         ),
+    ]
+    for ini, cases in test_cases:
+        c = Config(Context(), IniLayer.from_string(ini))
+        for k, expected_v in cases:
+            assert is_expected_getitem(c, k, expected_v)
+
+
+def test_ini_load_failure():
+    with pytest.raises(LoadFailure):
+        _ = Config(Context(), IniLayer.from_string("""[foo"""))

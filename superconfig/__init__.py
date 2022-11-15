@@ -1,7 +1,7 @@
 """Configuration library."""
 
 # DONE(jmyounker): Rename JsonLayer to ObjLayer
-# TODO(jmyounker): Rename InnerJsonLayer to InnterObjLayer
+# DONE(jmyounker): Rename InnerJsonLayer to InnterObjLayer
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
 # TODO(jmyounker): Add PropertyFileLayer
@@ -11,11 +11,11 @@
 # DONE(jmyounker): Add AwsSecretsManagerLoader
 # TODO(jmyounker): Add AwsParameterStoreLoader
 # TODO(jmyounker): Add RemapGetter
-# TODO(jmyounker): Add logging
+# TODO(jmyounker): Prototype logging
 # DONE(jmyounker): Test converters
 # TODO(jmyounker): Test low level converters
 # TODO(jmyounker): Unify loader operations into single context manager
-# TODO(jmyounker): Unify loader operations into single context manager
+# TODO(jmyounker): Change loaders from io.Bytes to bytes
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
@@ -42,6 +42,7 @@ from .loaders import FileLayerLoader
 from .loaders import SecretsManagerFetcher
 from .statics import ObjLayer
 from .statics import InnerObjLayer
+from .statics import IniLayer
 from .smarts import CacheLayer
 from .smarts import Constant
 from .smarts import Counter

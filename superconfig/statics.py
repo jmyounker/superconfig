@@ -1,9 +1,12 @@
+import configparser
 import json
+import re
 from typing import AnyStr
 from typing import Tuple
 from typing import Optional
 from typing import Any
 
+from superconfig import LoadFailure
 from . import config
 
 
@@ -52,3 +55,31 @@ class InnerObjLayer(config.Layer):
     @classmethod
     def from_file(cls, f):
         return cls(json.load(f))
+
+
+class IniLayer(config.Layer):
+    def __init__(self, config_parser: configparser.ConfigParser):
+        self.config_parser = config_parser
+
+    section_item_ptrn = re.compile(r"(.+)\.([^.]+)$")
+
+    @classmethod
+    def from_string(cls, x):
+        c = configparser.ConfigParser()
+        try:
+            c.read_string(x)
+        except Exception:
+            raise LoadFailure()
+        return cls(c)
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        """Gets the value for key or (Found, Go, None) if not found on terminal node."""
+        section_item = self.section_item_ptrn.match(key)
+        if not section_item:
+            return config.ReadResult.NotFound, config.Continue.Go, None
+        section = section_item.group(1)
+        item = section_item.group(2)
+        try:
+            return config.ReadResult.Found, config.Continue.Go, self.config_parser[section][item]
+        except Exception:
+            return config.ReadResult.NotFound, config.Continue.Go, None
