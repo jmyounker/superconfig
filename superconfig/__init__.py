@@ -1,7 +1,7 @@
 """Configuration library."""
 
 # DONE(jmyounker): Rename JsonLayer to ObjLayer
-# DONE(jmyounker): Rename InnerJsonLayer to InnterObjLayer
+# DONE(jmyounker): Rename InnerJsonLayer to InnerObjLayer
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
 # TODO(jmyounker): Add PropertyFileLayer
