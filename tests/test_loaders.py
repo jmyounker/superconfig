@@ -352,13 +352,11 @@ def test_autoload_parameterstore_json():
             sc.SmartLayer(
                 {
                     "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(sc.bytes_from_file(f))),
-                        fetcher=sc.AwsParameterStoreFetcher(
-                        ),
+                        layer_constructor=lambda f: sc.ConstantLayer(sc.bytes_from_file(f)),
+                        fetcher=sc.AwsParameterStoreFetcher(),
                     )
                 }
             ),
         ]
     )
-    assert c["a.b"] == "foo"
+    assert c["a.b"] == b"foo"

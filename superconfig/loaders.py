@@ -233,15 +233,46 @@ def config_switch(enable_key, default=False):
 class AwsParameterStoreFetcher(AbstractFetcher):
     """Pulls parameters from AWS parameterstore.
 
-    Parameter Store has options for the kind of data stored, and how it is looked up.
-    Parameter storage may be:
-        String
-        SecretString
+    Parameter Store has options for the kind of data stored, and how it is
+    looked up.
+
+    It seems that parameter stores are treated as trees now, and each node
+    contains a single value rather than sets of values.
+
+    It's quite possible that this design is wrong. Instead I should have
+    an entire layer that caches each parameter independently, and then
+    makes it looks like a normal graft.
+
+    Value parsing then happens with transformers in a higher layer, or within
+    a smart layer above the parameter store within the graft.  Actually, thinking
+    about it, I can probably rely on a cache layer to handle loading since I'm
+    pulling key-by-key.
+
+    That means I don't even need to use fetchers since the fields map
+    directly to the cache layer.
 
     """
+    def __init__(self, name=None, client=None):
+        self._client = client
+        self._name = None if name is None else helpers.ExpandableString(name)
+
     def load_required(self, now, key, rest, context, lower_layer):
         return True
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
-        yield io.BytesIO(b"foo")
+        client = self.get_client()
+        p = client.get_parameter(
+            Name=self.name(key, context, lower_layer),
+        )
+        yield io.BytesIO(p["Parameter"]["Value"].encode("utf8"))
+
+    def get_client(self):
+        if self._client:
+            return self._client
+        return boto3.client("ssm")
+
+    def name(self, key, context, lower_layer):
+        if self._name is None:
+            return "/" + key.replace(".", "/")
+        return self._name.expand(context, lower_layer)
