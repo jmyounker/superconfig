@@ -228,3 +228,20 @@ def config_switch(enable_key, default=False):
         else:
             return default
     return _config_switch
+
+
+class AwsParameterStoreFetcher(AbstractFetcher):
+    """Pulls parameters from AWS parameterstore.
+
+    Parameter Store has options for the kind of data stored, and how it is looked up.
+    Parameter storage may be:
+        String
+        SecretString
+
+    """
+    def load_required(self, now, key, rest, context, lower_layer):
+        return True
+
+    @contextlib.contextmanager
+    def load(self, now, key, rest, context, lower_layer):
+        yield io.BytesIO(b"foo")

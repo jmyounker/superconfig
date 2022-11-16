@@ -337,3 +337,28 @@ def test_autoload_filename_expansion_fails(tmp_path):
     ])
     with pytest.raises(KeyError):
         _ = c["a"]
+
+
+@moto.mock_ssm
+def test_autoload_parameterstore_json():
+    ps = boto3.client("ssm")
+    ps.put_parameter(
+        Name='/a/b',
+        Value='foo',
+    )
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer(
+                {
+                    "a.b": sc.AutoRefreshGetter(
+                        layer_constructor=lambda f: sc.ConstantLayer(
+                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                        fetcher=sc.AwsParameterStoreFetcher(
+                        ),
+                    )
+                }
+            ),
+        ]
+    )
+    assert c["a.b"] == "foo"
