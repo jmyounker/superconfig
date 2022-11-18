@@ -29,6 +29,7 @@
 # DONE(jmyounker): Split out requirements-dev.txt file
 # TODO(jmyounker): Layer builder creates context
 # TODO(jmyounker): Add root layer to context
+# TODO(jmyounker): Smart layer searches root or GetterLayer
 
 from .builders import parameter_store_getter
 from .config import Config
