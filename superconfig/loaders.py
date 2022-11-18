@@ -252,20 +252,16 @@ class AwsParameterStoreFetcher(AbstractFetcher):
     directly to the cache layer.
 
     """
-    def __init__(self, name=None, client=None):
+    def __init__(self, root=None, client=None):
         self._client = client
-        self._name = None if name is None else helpers.ExpandableString(name)
+        self._root = None if root is None else helpers.ExpandableString(root)
 
     def load_required(self, now, key, rest, context, lower_layer):
         return True
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
-        client = self.get_client()
-        p = client.get_parameter(
-            Name=self.name(key, context, lower_layer),
-        )
-        yield io.BytesIO(p["Parameter"]["Value"].encode("utf8"))
+        yield self.parameter_tree(self.get_client(), self.name(key, context, lower_layer))
 
     def get_client(self):
         if self._client:
@@ -273,6 +269,54 @@ class AwsParameterStoreFetcher(AbstractFetcher):
         return boto3.client("ssm")
 
     def name(self, key, context, lower_layer):
-        if self._name is None:
-            return "/" + key.replace(".", "/")
-        return self._name.expand(context, lower_layer)
+        if self._root is None:
+            return "/" + "/".join(key.split("."))
+        return self._root.expand(context, lower_layer)
+
+    def parameter_tree(self, client, path):
+        tree = {}
+        for k, p in self.describe_parameters_with_keys(client, path):
+            tree[k] = ParameterNode(client, p)
+        return tree
+
+    def describe_parameters_with_keys(self, client, path):
+        for p in self.describe_parameters(client, path):
+            key = p["Name"][len(path):].strip("/").replace("/", ".")
+            yield (key, p)
+
+    @staticmethod
+    def describe_parameters(client, path):
+        paginator = client.get_paginator('describe_parameters')
+        pager = paginator.paginate(
+            ParameterFilters=[
+                dict(Key="Path", Option="Recursive", Values=[path])
+            ]
+        )
+        for page in pager:
+            for p in page['Parameters']:
+                yield p
+
+
+class ParameterNode:
+    def __init__(self, client, parameter):
+        self.client = client
+        self.parameter = parameter
+
+    def read(self, key, rest, context, lower_layer):
+        # noinspection PyBroadException
+        try:
+            resp = self.client.get_parameter(Name=self.parameter["Name"])
+            p = resp["Parameter"]
+        except Exception:
+            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+        print(p)
+        if p["Type"] == "String":
+            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"]
+        elif p["Type"] == "StringList":
+            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"].split(",")
+        elif p["Type"] == "SecureString":
+            print(p)
+            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"]
+        else:
+            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+

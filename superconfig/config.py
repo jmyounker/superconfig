@@ -111,6 +111,16 @@ class LinkedLayer(Layer):
         return self.sublayer.get_item(key, context, lower_layer)
 
 
+class IndexLayer:
+    def __init__(self, map):
+        self.map = map
+
+    def get_item(self, key, context, lower_layer):
+        if key not in self.map:
+            return ReadResult.NotFound, Continue.NextLayer, None
+        return self.map[key].read(key, [], context, lower_layer)
+
+
 class TerminalLayer(Layer):
     @classmethod
     def get_item(cls, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:

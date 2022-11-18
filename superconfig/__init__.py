@@ -9,10 +9,12 @@
 # DONE(jmyounker): Add IniLayer
 # DONE(jmyounker): Add Yaml converter
 # DONE(jmyounker): Add AwsSecretsManagerLoader
-# TODO(jmyounker): Add AwsParameterStoreFetcher
-#   TODO(jmyounker): Create param tree facade
-#   TODO(jmyounker): Create param tree walker
-#   TODO(jmyounker): Accept expandable prefix
+# DONE(jmyounker): Add AwsParameterStoreFetcher
+#   DONE(jmyounker): Create param tree facade
+#   DONE(jmyounker): Create param tree walker
+#   DONE(jmyounker): Accept expandable prefix
+#   TODO(jmyounker): Test reload flushes removed params
+#   TODO(jmyounker): Test reload finds added params
 # TODO(jmyounker): Add non-blocking fetching
 # TODO(jmyounker): Add RemapGetter
 # TODO(jmyounker): Prototype logging
@@ -25,11 +27,15 @@
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
 # DONE(jmyounker): Add is_enabled to AwsSecretsManagerLoader
 # DONE(jmyounker): Split out requirements-dev.txt file
+# TODO(jmyounker): Layer builder creates context
+# TODO(jmyounker): Add root layer to context
 
+from .builders import parameter_store_getter
 from .config import Config
 from .config import Context
 from .config import ConstantLayer
 from .config import layered_config
+from .config import IndexLayer
 from .converters import bytes_from_base64
 from .converters import bytes_from_file
 from .converters import LoadFailure
