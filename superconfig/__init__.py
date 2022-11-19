@@ -5,7 +5,7 @@
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
 # TODO(jmyounker): Add PropertyFileLayer
-# TODO(jmyounker): Add Toml converter
+# DONE(jmyounker): Add Toml converter
 # DONE(jmyounker): Add IniLayer
 # DONE(jmyounker): Add Yaml converter
 # DONE(jmyounker): Add AwsSecretsManagerLoader
@@ -41,6 +41,7 @@ from .converters import bytes_from_base64
 from .converters import bytes_from_file
 from .converters import LoadFailure
 from .converters import obj_from_json
+from .converters import obj_from_toml
 from .converters import obj_from_yaml
 from .converters import string_from_bytes
 from .helpers import expansions

@@ -20,11 +20,12 @@ constructor:
 
 import binascii
 import base64
-import configparser
 import io
 import json
 from typing import Any
 from typing import AnyStr
+
+import toml
 
 try:
     from yaml import CDumper as Dumper
@@ -39,16 +40,23 @@ class LoadFailure(Exception):
     pass
 
 
-def obj_from_yaml(x: AnyStr) -> Any:
+def obj_from_json(x: AnyStr) -> Any:
     try:
-        return yaml.load(x, Loader=Loader)
+        return json.loads(x)
     except Exception:
         raise LoadFailure()
 
 
-def obj_from_json(x: AnyStr) -> Any:
+def obj_from_toml(x: AnyStr) -> Any:
     try:
-        return json.loads(x)
+        return toml.loads(x)
+    except Exception:
+        raise LoadFailure()
+
+
+def obj_from_yaml(x: AnyStr) -> Any:
+    try:
+        return yaml.load(x, Loader=Loader)
     except Exception:
         raise LoadFailure()
 
