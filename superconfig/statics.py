@@ -6,6 +6,8 @@ from typing import Tuple
 from typing import Optional
 from typing import Any
 
+import jproperties
+
 from superconfig import LoadFailure
 from . import config
 
@@ -81,5 +83,28 @@ class IniLayer(config.Layer):
         item = section_item.group(2)
         try:
             return config.ReadResult.Found, config.Continue.Go, self.config_parser[section][item]
+        except Exception:
+            return config.ReadResult.NotFound, config.Continue.Go, None
+
+
+class PropertiesLayer(config.Layer):
+    def __init__(self, properties: jproperties.Properties):
+        self.properties = properties
+
+    @classmethod
+    def from_string(cls, x):
+        p = jproperties.Properties(x)
+        try:
+            p.load(x)
+        except Exception:
+            raise LoadFailure()
+        return cls(p)
+
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+        """Gets the value for key or (Found, Go, None) if not found on terminal node."""
+        if key not in self.properties:
+            return config.ReadResult.NotFound, config.Continue.Go, None
+        try:
+            return config.ReadResult.Found, config.Continue.Go, self.properties[key].data
         except Exception:
             return config.ReadResult.NotFound, config.Continue.Go, None

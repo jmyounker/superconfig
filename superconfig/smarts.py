@@ -189,3 +189,13 @@ class CacheLayer:
         resp = lower_layer.get_item(key, context, config.NullLayer())
         self.cache[key] = (resp, now + self.timeout_s)
         return resp
+
+
+class IndexGetterLayer:
+    def __init__(self, map):
+        self.map = map
+
+    def get_item(self, key, context, lower_layer):
+        if key not in self.map:
+            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+        return self.map[key].read(key, [], context, lower_layer)

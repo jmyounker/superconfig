@@ -118,7 +118,7 @@ class IndexLayer:
     def get_item(self, key, context, lower_layer):
         if key not in self.map:
             return ReadResult.NotFound, Continue.NextLayer, None
-        return self.map[key].read(key, [], context, lower_layer)
+        return ReadResult.Found, Continue.Go, self.map[key]
 
 
 class TerminalLayer(Layer):

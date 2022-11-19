@@ -319,4 +319,3 @@ class ParameterNode:
             return config.ReadResult.Found, config.Continue.NextLayer, p["Value"]
         else:
             return config.ReadResult.NotFound, config.Continue.NextLayer, None
-

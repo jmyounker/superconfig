@@ -3,7 +3,7 @@ import pytest
 from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
-from superconfig import Config, LoadFailure
+from superconfig import Config, LoadFailure, PropertiesLayer
 from superconfig import ObjLayer
 from superconfig import InnerObjLayer
 from superconfig import IniLayer
@@ -111,8 +111,8 @@ def test_ini_layer():
         ("""# An INI file
 [a]
   b: 1
-    
-    """, [("a", KeyError), ("a.b", "1")],
+""",
+         [("a", KeyError), ("a.b", "1")],
          ),
     ]
     for ini, cases in test_cases:
@@ -124,3 +124,15 @@ def test_ini_layer():
 def test_ini_load_failure():
     with pytest.raises(LoadFailure):
         _ = Config(Context(), IniLayer.from_string("""[foo"""))
+
+
+def test_properties_layer():
+    config = """# This is a comment
+a:1
+b:2
+"""
+    c = Config(
+        Context(),
+        PropertiesLayer.from_string(config)
+    )
+    assert c["a"] == "1"

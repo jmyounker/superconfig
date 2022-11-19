@@ -4,7 +4,7 @@
 # DONE(jmyounker): Rename InnerJsonLayer to InnerObjLayer
 # DONE(jmyounker): Add InnerJsonLayer
 # TODO(jmyounker): Add array indexing to JsonLayers
-# TODO(jmyounker): Add PropertyFileLayer
+# DON(jmyounker): Add PropertyFileLayer
 # DONE(jmyounker): Add Toml converter
 # DONE(jmyounker): Add IniLayer
 # DONE(jmyounker): Add Yaml converter
@@ -56,6 +56,7 @@ from .loaders import SecretsManagerFetcher
 from .statics import ObjLayer
 from .statics import InnerObjLayer
 from .statics import IniLayer
+from .statics import PropertiesLayer
 from .smarts import CacheLayer
 from .smarts import Constant
 from .smarts import Counter

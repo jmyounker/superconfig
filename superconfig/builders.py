@@ -10,7 +10,7 @@ def parameter_store_getter(
     retry_interval_s=10,
 ):
     return loaders.AutoRefreshGetter(
-        layer_constructor=config.IndexLayer,
+        layer_constructor=loaders.IndexGetterLayer,
         fetcher=loaders.AwsParameterStoreFetcher(root=parameter_store_base_path),
         refresh_interval_s=refresh_interval_s,
         retry_interval_s=retry_interval_s,
