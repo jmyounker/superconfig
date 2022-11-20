@@ -3,7 +3,7 @@
 # DONE(jmyounker): Rename JsonLayer to ObjLayer
 # DONE(jmyounker): Rename InnerJsonLayer to InnerObjLayer
 # DONE(jmyounker): Add InnerJsonLayer
-# TODO(jmyounker): Add array indexing to JsonLayers
+# DONE(jmyounker): Add array indexing to JsonLayers
 # DON(jmyounker): Add PropertyFileLayer
 # DONE(jmyounker): Add Toml converter
 # DONE(jmyounker): Add IniLayer

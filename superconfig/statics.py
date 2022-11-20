@@ -21,14 +21,21 @@ class ObjLayer(config.Layer):
         indexes = key.split('.')
         v = self.data
         for i in range(0, len(indexes)):
-            if not isinstance(v, dict):
-                return config.ReadResult.NotFound, config.Continue.Go, None
             index = indexes[i]
-            if index not in v:
+            if isinstance(v, dict):
+                try:
+                    v = v[index]
+                except Exception:
+                    return config.ReadResult.NotFound, config.Continue.Go, None
+            elif isinstance(v, list):
+                try:
+                    v = v[int(index)]
+                except Exception:
+                    return config.ReadResult.NotFound, config.Continue.Go, None
+            else:
                 return config.ReadResult.NotFound, config.Continue.Go, None
-            v = v[index]
         # Last item must not be a dict
-        if isinstance(v, dict):
+        if isinstance(v, dict) or isinstance(v, list):
             return config.ReadResult.NotFound, config.Continue.Go, None
         return config.ReadResult.Found, config.Continue.Go, v
 

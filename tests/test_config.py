@@ -21,6 +21,10 @@ def test_getitem():
         ({"a": {"b": 1}}, "a.c", KeyError),
         ({"a": {"b": 1}}, "b", KeyError),
         ({"a": {"b": 1}}, "c", KeyError),
+        ([0, 1, 2, 3], "2", 2),
+        ({"a": [0, 1, 2, 3]}, "a.2", 2),
+        ({"a": [0, 1, {"b": 2}, 3]}, "a.2.b", 2),
+        ([0, 1, 2, 3], "6", KeyError),
     ]
     for (d, k, res) in test_cases:
         config = Config(Context(), ObjLayer(d))
