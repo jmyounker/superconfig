@@ -1,7 +1,6 @@
 """Perform specific actions for specific keys."""
 
 import os
-import re
 import time
 from typing import Any
 from typing import AnyStr
