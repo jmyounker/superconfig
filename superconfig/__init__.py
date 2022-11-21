@@ -40,6 +40,7 @@ from .config import Context
 from .config import ConstantLayer
 from .config import layered_config
 from .config import IndexLayer
+from .config import Response
 from .converters import bytes_from_base64
 from .converters import bytes_from_file
 from .converters import LoadFailure

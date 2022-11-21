@@ -16,7 +16,7 @@ class ObjLayer(config.Layer):
     def __init__(self, data):
         self.data = data
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> config.Response:
         """Gets the value for key or (Found, Go, None) if not found on terminal node."""
         indexes = key.split('.')
         v = self.data
@@ -26,18 +26,18 @@ class ObjLayer(config.Layer):
                 try:
                     v = v[index]
                 except Exception:
-                    return config.ReadResult.NotFound, config.Continue.Go, None
+                    return config.Response.not_found
             elif isinstance(v, list):
                 try:
                     v = v[int(index)]
                 except Exception:
-                    return config.ReadResult.NotFound, config.Continue.Go, None
+                    return config.Response.not_found
             else:
-                return config.ReadResult.NotFound, config.Continue.Go, None
+                return config.Response.not_found
         # Last item must not be a dict
         if isinstance(v, dict) or isinstance(v, list):
-            return config.ReadResult.NotFound, config.Continue.Go, None
-        return config.ReadResult.Found, config.Continue.Go, v
+            return config.Response.not_found
+        return config.Response.found(v)
 
     @classmethod
     def from_file(cls, f):
@@ -48,18 +48,18 @@ class InnerObjLayer(config.Layer):
     def __init__(self, data):
         self.data = data
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> config.Response:
         """Gets the value for key or (Found, Go, None) if not found on terminal node."""
         indexes = key.split('.')
         v = self.data
         for i in range(0, len(indexes)):
             if not isinstance(v, dict):
-                return config.ReadResult.NotFound, config.Continue.Go, None
+                return config.Response.not_found
             index = indexes[i]
             if index not in v:
-                return config.ReadResult.NotFound, config.Continue.Go, None
+                return config.Response.not_found
             v = v[index]
-        return config.ReadResult.Found, config.Continue.Go, v
+        return config.Response.found(v)
 
     @classmethod
     def from_file(cls, f):
@@ -81,17 +81,17 @@ class IniLayer(config.Layer):
             raise LoadFailure()
         return cls(c)
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> config.Response:
         """Gets the value for key or (Found, Go, None) if not found on terminal node."""
         section_item = self.section_item_ptrn.match(key)
         if not section_item:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found
         section = section_item.group(1)
         item = section_item.group(2)
         try:
-            return config.ReadResult.Found, config.Continue.Go, self.config_parser[section][item]
+            return config.Response.found(self.config_parser[section][item])
         except Exception:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found
 
 
 class PropertiesLayer(config.Layer):
@@ -110,8 +110,8 @@ class PropertiesLayer(config.Layer):
     def get_item(self, key: AnyStr, context: config.Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
         """Gets the value for key or (Found, Go, None) if not found on terminal node."""
         if key not in self.properties:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found
         try:
-            return config.ReadResult.Found, config.Continue.Go, self.properties[key].data
+            return config.Response.found(self.properties[key].data)
         except Exception:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found

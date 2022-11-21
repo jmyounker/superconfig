@@ -28,14 +28,10 @@ class SmartLayer(config.Layer):
             k = ".".join(indexes[0:i])
             if k not in self.getters:
                 continue
-            found, cont, v = self.getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
-            if found == config.ReadResult.Found:
-                return found, cont, v
-            elif cont == config.Continue.Stop:
-                return found, cont, v
-            elif cont == config.Continue.NextLayer:
-                return found, config.Continue.Go, v
-        return config.ReadResult.NotFound, config.Continue.Go, None
+            resp = self.getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
+            if resp.is_found or resp.must_stop or resp.go_next_layer:
+                return resp
+        return config.Response.not_found
 
 
 class Getter:
@@ -60,12 +56,10 @@ class GetterStack(Getter):
 
     def read(self, key, res, context, lower_layer):
         for g in self.getters:
-            found, cont, v = g.read(key, res, context, lower_layer)
-            if found == config.ReadResult.Found:
-                return found, cont, v
-            if cont == config.Continue.Stop:
-                return found, cont, v
-        return config.ReadResult.NotFound, config.Continue.Go, None
+            resp = g.read(key, res, context, lower_layer)
+            if resp.is_found or resp.must_stop:
+                return resp
+        return config.Response.not_found
 
 
 class Env(Getter):
@@ -75,8 +69,8 @@ class Env(Getter):
 
     def read(self, key, rest, context, lower_layer):
         if self.envar not in os.environ:
-            return config.ReadResult.NotFound, config.Continue.Go, None
-        return config.ReadResult.Found, config.Continue.Go, os.environ[self.envar]
+            return config.Response.not_found
+        return config.Response.found(os.environ[self.envar])
 
 
 class Transform(Getter):
@@ -92,14 +86,14 @@ class Transform(Getter):
         self.getter = getter
 
     def read(self, key, res, context, lower_layer):
-        found, cont, v = self.getter.read(key, res, context, lower_layer)
-        if found == config.ReadResult.NotFound:
-            return found, cont, v
+        resp = self.getter.read(key, res, context, lower_layer)
+        if not resp.is_found:
+            return resp
         # noinspection PyBroadException
         try:
-            return found, cont, self.f(v)
+            return resp.new_value(self.f(resp.value))
         except Exception as e:
-            raise config.ValueTransformException(key, v, e)
+            raise config.ValueTransformException(key, resp.value, e)
 
 
 class Constant(Getter):
@@ -108,14 +102,14 @@ class Constant(Getter):
         self.c = c
 
     def read(self, key, res, context, lower_layer):
-        return config.ReadResult.Found, config.Continue.Go, self.c
+        return config.Response.found(self.c)
 
 
 class NotFound(Getter):
     """Simulates not found item. Exists for testing."""
     @classmethod
     def read(cls, key, res, context, lower_layer):
-        return config.ReadResult.NotFound, config.Continue.Go, None
+        return config.Response.not_found
 
 
 class Stop(Getter):
@@ -128,7 +122,7 @@ class Stop(Getter):
     """
     @classmethod
     def read(cls, key, res, context, lower_layer):
-        return config.ReadResult.NotFound, config.Continue.Stop, None
+        return config.Response.not_found_stop
 
 
 class IgnoreTransformErrors(Getter):
@@ -140,7 +134,7 @@ class IgnoreTransformErrors(Getter):
         try:
             return self.getter.read(key, res, context, lower_layer)
         except config.ValueTransformException:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found
 
 
 class Counter(Getter):
@@ -150,7 +144,7 @@ class Counter(Getter):
 
     def read(self, key, res, context, lower_layer):
         self.n += 1
-        return config.ReadResult.Found, config.Continue.Go, self.n
+        return config.Response.found(self.n)
 
 
 class KeyExpansionLayer(config.Layer):
@@ -158,7 +152,7 @@ class KeyExpansionLayer(config.Layer):
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         k = helpers.expand(key, helpers.expansions(key), context, lower_layer)
         if k is None:
-            return config.ReadResult.NotFound, config.Continue.Go, None
+            return config.Response.not_found
         return lower_layer.get_item(k, context, config.NullLayer)
 
 
@@ -167,28 +161,38 @@ class Graft(Getter):
         self.layer = layer
 
     def read(self, key, rest, context, lower_layer):
-        found, cont, v = self.layer.get_item('.'.join(rest), context, lower_layer)
-        if found == config.ReadResult.NotFound:
-            return found, config.Continue.NextLayer, v
-        elif cont == config.Continue.Go:
-            return found, config.Continue.NextLayer, v
-        else:
-            return found, cont, v
+        resp = self.layer.get_item('.'.join(rest), context, lower_layer)
+        if not resp.is_found or not resp.go_next_layer:
+            return config.Response.found_next(resp.value)
+        return resp
 
 
 class CacheLayer:
-    def __init__(self, timeout_s=5):
+    def __init__(self, timeout_s=5, negative_response_s=0):
         self.cache = {}
         self.timeout_s = timeout_s
+        self.negative_response_s = negative_response_s
 
-    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> tuple[int, int, Any | None]:
+    def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> config.Response:
         now = time.time()
-        resp, invalid_at = self.cache.get(key, ((config.ReadResult.NotFound, config.Continue.Go, None), now))
-        if invalid_at > now:
-            return resp
+        cached_resp = self.cache.get(key, None)
+        if cached_resp is not None and cached_resp.still_unexpired(now):
+            return cached_resp
         resp = lower_layer.get_item(key, context, config.NullLayer())
-        self.cache[key] = (resp, now + self.timeout_s)
-        return resp
+        if resp.is_found:
+            return self._cache(key, resp, now, self.timeout_s)
+        if not self.negative_response_s:
+            return resp
+        return self._cache(key, resp, now, self.negative_response_s)
+
+    def _cache(self, key, resp, now, ttl_s):
+        if resp.expire is None:
+            cache_resp = resp.cache_until(now + ttl_s)
+            self.cache[key] = cache_resp
+            return cache_resp
+        else:
+            self.cache[key] = resp
+            return resp
 
 
 class IndexGetterLayer:
@@ -197,5 +201,5 @@ class IndexGetterLayer:
 
     def get_item(self, key, context, lower_layer):
         if key not in self.map:
-            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+            return config.Response.not_found_next
         return self.map[key].read(key, [], context, lower_layer)

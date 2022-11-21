@@ -1,10 +1,86 @@
 """Configuration library."""
-import time
-from collections import namedtuple
-from typing import Any, NamedTuple
+
+from typing import Any
 from typing import AnyStr
+from typing import NamedTuple
 from typing import Optional
-from typing import Tuple
+
+
+class Response(NamedTuple):
+    is_found: bool
+    must_stop: bool
+    go_next_layer: bool
+    value: Optional[Any]
+    expire: Optional[int]
+
+    @classmethod
+    def found(cls, value, expire=None):
+        return cls(
+            is_found=True,
+            must_stop=False,
+            go_next_layer=False,
+            value=value,
+            expire=expire,
+        )
+
+    @classmethod
+    def found_next(cls, value, expire=None):
+        return cls(
+            is_found=True,
+            must_stop=False,
+            go_next_layer=True,
+            value=value,
+            expire=expire,
+        )
+
+    def new_value(self, x):
+        return Response(
+            is_found=self.is_found,
+            must_stop=self.must_stop,
+            go_next_layer=self.go_next_layer,
+            value=x,
+            expire=self.expire
+        )
+
+    def has_expired(self, now):
+        return self.expire is None or self.expire <= now
+
+    def still_unexpired(self, now):
+        return self.expire is not None and self.expire > now
+
+    def cache_until(self, expire):
+        return Response(
+            is_found=self.is_found,
+            must_stop=self.must_stop,
+            go_next_layer=self.go_next_layer,
+            value=self.value,
+            expire=expire,
+        )
+
+Response.not_found = Response(
+    is_found=False,
+    must_stop=False,
+    go_next_layer=False,
+    value=None,
+    expire=None,
+)
+
+
+Response.not_found_stop = Response(
+    is_found=False,
+    must_stop=True,
+    go_next_layer=False,
+    value=None,
+    expire=None,
+)
+
+Response.not_found_next = Response(
+    is_found=False,
+    must_stop=False,
+    go_next_layer=True,
+    value=None,
+    expire=None,
+)
 
 
 class ValueTransformException(Exception):
@@ -39,7 +115,7 @@ class Context:
 
 
 class Layer:
-    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Response:
         raise NotImplemented()
 
 
@@ -49,22 +125,18 @@ class Config:
         self.layer = layer
 
     def __getitem__(self, key: AnyStr) -> Optional[Any]:
-        status, cont, value = self._get_item(key, self.context, NullLayer)
-        if status == ReadResult.Found:
-            return value
-        elif status == ReadResult.NotFound:
-            raise KeyError("key {} not found".format(key))
+        resp = self._get_item(key, self.context, NullLayer)
+        if resp.is_found:
+            return resp.value
         else:
-            raise Exception("Unknown status {} found for key {}".format(status, value))
+            raise KeyError("key {} not found".format(key))
 
     def get(self, key: AnyStr, default: Optional[Any] = None) -> Optional[Any]:
-        status, cont, value = self._get_item(key, self.context, NullLayer)
-        if status == ReadResult.Found:
-            return value
-        elif status == ReadResult.NotFound:
-            return default
+        resp = self._get_item(key, self.context, NullLayer)
+        if resp.is_found:
+            return resp.value
         else:
-            raise Exception("Unknown status {} found for key {}".format(status, value))
+            return default
 
     def _get_item(self, *args, **kwargs):
         try:
@@ -95,7 +167,7 @@ class LayerCake(Layer):
     def push(self, layer):
         self.layers = LinkedLayer(layer, self.layers)
 
-    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Response:
         return self.layers.get_item(key, context, lower_layer)
 
 
@@ -104,12 +176,10 @@ class LinkedLayer(Layer):
         self.layer = layer
         self.sublayer = sublayer
 
-    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
-        found, cont, v = self.layer.get_item(key, context, self.sublayer)
-        if found == ReadResult.Found:
-            return found, cont, v
-        if cont == Continue.Stop:
-            return found, cont, v
+    def get_item(self, key: AnyStr, context: Context, lower_layer) -> Response:
+        resp = self.layer.get_item(key, context, self.sublayer)
+        if resp.is_found or resp.must_stop:
+            return resp
         return self.sublayer.get_item(key, context, lower_layer)
 
 
@@ -119,20 +189,20 @@ class IndexLayer:
 
     def get_item(self, key, context, lower_layer):
         if key not in self.map:
-            return ReadResult.NotFound, Continue.NextLayer, None
-        return ReadResult.Found, Continue.Go, self.map[key]
+            return Response.not_found_next
+        return Response.found(self.map[key])
 
 
 class TerminalLayer(Layer):
     @classmethod
-    def get_item(cls, key: AnyStr, context: Context, lower_layer) -> Tuple[int, int, Optional[Any]]:
+    def get_item(cls, key: AnyStr, context: Context, lower_layer) -> Response:
         return lower_layer.get_item(key, context, NullLayer)
 
 
 class NullLayer(Layer):
     @classmethod
     def get_item(cls, key, context, lower_layer):
-        return ReadResult.NotFound, Continue.Go, None
+        return Response.not_found
 
 
 class ConstantLayer(Layer):
@@ -148,62 +218,5 @@ class ConstantLayer(Layer):
         self.value = value
 
     def get_item(self, key, context, lower_layer):
-        return ReadResult.Found, Continue.Go, self.value
+        return Response.found(self.value)
 
-
-class Response(NamedTuple):
-    found: bool
-    stop: bool
-    next_layer: bool
-    value: Optional[Any]
-    expire: Optional[int]
-
-    @classmethod
-    def found(cls, value, expire=None):
-        return cls(
-            found=True,
-            stop=False,
-            next_layer=False,
-            value=value,
-            expire=expire,
-        )
-
-    @classmethod
-    def not_found_cached(cls, expire):
-        return cls(
-            found=False,
-            stop=False,
-            next_layer=False,
-            value=None,
-            expire=expire,
-        )
-
-    @property
-    def has_expired(self):
-        return self.expire is None or self.expire >= time.time()
-
-
-Response.not_found = Response(
-    found=False,
-    stop=False,
-    next_layer=False,
-    value=None,
-    expire=None,
-)
-
-
-Response.not_found_stop = Response(
-    found=False,
-    stop=True,
-    next_layer=False,
-    value=None,
-    expire=None,
-)
-
-Response.not_found_next = Response(
-    found=False,
-    stop=False,
-    next_layer=True,
-    value=None,
-    expire=None,
-)

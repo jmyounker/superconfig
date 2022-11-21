@@ -25,7 +25,6 @@ import json
 from typing import Any
 from typing import AnyStr
 
-import jproperties
 import toml
 
 try:

@@ -222,9 +222,9 @@ class FileLayerLoader:
 
 def config_switch(enable_key, default=False):
     def _config_switch(key, rest, context, lower_layer, enable_key=enable_key, default=default):
-        found, _, value = lower_layer.get_item(enable_key, context, config.NullLayer)
-        if found == config.ReadResult.Found:
-            return bool(value)
+        resp = lower_layer.get_item(enable_key, context, config.NullLayer)
+        if resp.is_found:
+            return bool(resp.value)
         else:
             return default
     return _config_switch
@@ -308,14 +308,13 @@ class ParameterNode:
             resp = self.client.get_parameter(Name=self.parameter["Name"])
             p = resp["Parameter"]
         except Exception:
-            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+            return config.Response.not_found_next
         print(p)
         if p["Type"] == "String":
-            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"]
+            return config.Response.found_next(p["Value"])
         elif p["Type"] == "StringList":
-            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"].split(",")
+            return config.Response.found_next(p["Value"].split(","))
         elif p["Type"] == "SecureString":
-            print(p)
-            return config.ReadResult.Found, config.Continue.NextLayer, p["Value"]
+            return config.Response.found_next(p["Value"])
         else:
-            return config.ReadResult.NotFound, config.Continue.NextLayer, None
+            return config.Response.not_found_next

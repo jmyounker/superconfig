@@ -24,10 +24,10 @@ def expansions(tmpl):
 def expand(tmpl, expansions, context: config.Context, lower_layer: config.Layer) -> Optional[AnyStr]:
     replacements = []
     for exp in expansions:
-        found, cont, v = lower_layer.get_item(exp, context, config.NullLayer)
-        if found == config.ReadResult.NotFound:
+        resp = lower_layer.get_item(exp, context, config.NullLayer)
+        if not resp.is_found:
             return None
-        replacements.append(('{%s}' % exp, v))
+        replacements.append(('{%s}' % exp, resp.value))
     t = tmpl
     for exp, v in replacements:
         t = t.replace(exp, v)
