@@ -57,11 +57,10 @@ class AutoRefreshGetter:
         if self.next_load_s >= now:
             return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
         try:
-            if not self.fetcher.load_required(now, key, rest, context, lower_layer):
-                return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
             if self.is_enabled(key, rest, context, lower_layer):
                 with self.fetcher.load(now, key, rest, context, lower_layer) as f:
-                    self.loaded_layer = self.layer_constructor(f)
+                    if f is not None:
+                        self.loaded_layer = self.layer_constructor(f)
                 self.last_successful_load = now
                 self.next_load_s += now + self.refresh_interval_s
         except DataSourceMissing:
@@ -93,12 +92,6 @@ class FetchFailure(Exception):
 
 class AbstractFetcher:
     """Fetchers obtain read-only binary file objects from external sources."""
-    def is_enabled(self, key, rest, context, lower_layer):
-        return True
-
-    def load_required(self, now, key, rest, context, lower_layer):
-        raise NotImplementedError
-
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
         raise NotImplementedError
@@ -109,9 +102,6 @@ class SecretsManagerFetcher(AbstractFetcher):
         self._client = client
         self._name = None if name is None else helpers.ExpandableString(name)
         self._stage = stage
-
-    def load_required(self, now, key, rest, context, lower_layer):
-        return True
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
@@ -160,30 +150,33 @@ class SecretsManagerFetcher(AbstractFetcher):
 class FileFetcher(AbstractFetcher):
     def __init__(self, filename_tmpl):
         self.name = helpers.ExpandableString(filename_tmpl)
-        self.filename = None
         self.last_mtime = 0
 
-    def load_required(self, now, key, rest, context, lower_layer):
+    def load_required(self, filename):
         # The expansion works because there is an implicit sequencing between
         # these two calls.
-        filename = self.name.expand(context, lower_layer)
-        if filename is None:
-            raise FetchFailure()
-        self.filename = filename
         if not self.last_mtime:
             return True
         try:
-            return os.stat(self.filename).st_mtime > self.last_mtime
+            return os.stat(filename).st_mtime > self.last_mtime
         except FileNotFoundError:
             raise DataSourceMissing()
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
+        filename = self.name.expand(context, lower_layer)
+        if filename is None:
+            raise FetchFailure()
+
+        if not self.load_required(filename):
+            yield None
+            return
+
         try:
             # Get stat before, so if the file is updated after the stat, then it will
             # be found as out-of-date on the next load.
-            s = os.stat(self.filename)
-            with open(self.filename, 'rb') as f:
+            s = os.stat(filename)
+            with open(filename, 'rb') as f:
                 yield f
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
@@ -255,9 +248,6 @@ class AwsParameterStoreFetcher(AbstractFetcher):
     def __init__(self, root=None, client=None):
         self._client = client
         self._root = None if root is None else helpers.ExpandableString(root)
-
-    def load_required(self, now, key, rest, context, lower_layer):
-        return True
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
