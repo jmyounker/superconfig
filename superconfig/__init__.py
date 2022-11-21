@@ -19,7 +19,6 @@
 # TODO(jmyounker): Add RemapGetter
 # TODO(jmyounker): Prototype logging
 # DONE(jmyounker): Test converters
-# TODO(jmyounker): Test low level converters
 # TODO(jmyounker): Unify loader operations into single context manager
 # TODO(jmyounker): Change loaders from io.Bytes to bytes
 # DONE(jmyounker): Test loader expansions
@@ -30,6 +29,9 @@
 # TODO(jmyounker): Layer builder creates context
 # TODO(jmyounker): Add root layer to context
 # TODO(jmyounker): Smart layer searches root or GetterLayer
+# TODO(jmyounker): Create response mechanism
+# TODO(jmyounker): Thread response mechanism through
+# TODO(jmyounker): Wire in caching
 
 from .builders import parameter_store_getter
 from .config import Config
