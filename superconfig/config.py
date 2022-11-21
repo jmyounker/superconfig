@@ -1,5 +1,7 @@
 """Configuration library."""
-from typing import Any
+import time
+from collections import namedtuple
+from typing import Any, NamedTuple
 from typing import AnyStr
 from typing import Optional
 from typing import Tuple
@@ -147,3 +149,61 @@ class ConstantLayer(Layer):
 
     def get_item(self, key, context, lower_layer):
         return ReadResult.Found, Continue.Go, self.value
+
+
+class Response(NamedTuple):
+    found: bool
+    stop: bool
+    next_layer: bool
+    value: Optional[Any]
+    expire: Optional[int]
+
+    @classmethod
+    def found(cls, value, expire=None):
+        return cls(
+            found=True,
+            stop=False,
+            next_layer=False,
+            value=value,
+            expire=expire,
+        )
+
+    @classmethod
+    def not_found_cached(cls, expire):
+        return cls(
+            found=False,
+            stop=False,
+            next_layer=False,
+            value=None,
+            expire=expire,
+        )
+
+    @property
+    def has_expired(self):
+        return self.expire is None or self.expire >= time.time()
+
+
+Response.not_found = Response(
+    found=False,
+    stop=False,
+    next_layer=False,
+    value=None,
+    expire=None,
+)
+
+
+Response.not_found_stop = Response(
+    found=False,
+    stop=True,
+    next_layer=False,
+    value=None,
+    expire=None,
+)
+
+Response.not_found_next = Response(
+    found=False,
+    stop=False,
+    next_layer=True,
+    value=None,
+    expire=None,
+)
