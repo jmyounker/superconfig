@@ -30,7 +30,7 @@
 # TODO(jmyounker): Layer builder creates context
 # TODO(jmyounker): Add root layer to context
 # TODO(jmyounker): Smart layer searches root or GetterLayer
-# TODO(jmyounker): Create response mechanism
+# DONE(jmyounker): Create response mechanism
 # TODO(jmyounker): Thread response mechanism through
 # TODO(jmyounker): Wire in caching
 
