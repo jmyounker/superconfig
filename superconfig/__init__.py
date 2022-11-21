@@ -26,6 +26,7 @@
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader
 # DONE(jmyounker): Add is_enabled to AwsSecretsManagerLoader
 # DONE(jmyounker): Split out requirements-dev.txt file
+# DONE(jmyounker): Add fix for key expansion layer
 # TODO(jmyounker): Layer builder creates context
 # TODO(jmyounker): Add root layer to context
 # TODO(jmyounker): Smart layer searches root or GetterLayer
