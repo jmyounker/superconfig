@@ -31,8 +31,10 @@
 # TODO(jmyounker): Add root layer to context
 # TODO(jmyounker): Smart layer searches root or GetterLayer
 # DONE(jmyounker): Create response mechanism
-# TODO(jmyounker): Thread response mechanism through
-# TODO(jmyounker): Wire in caching
+# DONE(jmyounker): Thread response mechanism through
+# DONE(jmyounker): Wire in caching
+# TODO(jmyounker): Improving names in Response class
+# TODO(jmyounker): Improves names in cache classes
 
 from .builders import parameter_store_getter
 from .config import Config
