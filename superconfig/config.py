@@ -188,6 +188,8 @@ class IndexLayer:
         self.map = map
 
     def get_item(self, key, context, lower_layer):
+        if not key:
+            key = "."
         if key not in self.map:
             return Response.not_found_next
         return Response.found(self.map[key])

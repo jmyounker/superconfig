@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 
 import freezegun
@@ -283,3 +284,39 @@ def test_key_expansion_layer():
     assert c["a.b"] == 1
     assert c["env"] == "b"
     assert is_expected_getitem(c, "{env}", KeyError)
+
+
+def test_getter_to_layer_adapter(tmp_path):
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1, "b": {"c": 2}}))
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.GetterAsLayer(
+                sc.AutoRefreshGetter(
+                    layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(sc.bytes_from_file(x)))),
+                    fetcher=sc.FileFetcher(str(f)),
+                ),
+            ),
+        ]
+    )
+    assert c["a"] == 1
+    assert c["b.c"] == 2
+
+
+def test_smart_layer_root_getter(tmp_path):
+    f = tmp_path / "foo.json"
+    f.write_text(json.dumps({"a": 1, "b": {"c": 2}}))
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer({
+                ".": sc.AutoRefreshGetter(
+                    layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(sc.bytes_from_file(x)))),
+                    fetcher=sc.FileFetcher(str(f)),
+                ),
+            }),
+        ]
+    )
+    assert c["a"] == 1
+    assert c["b.c"] == 2

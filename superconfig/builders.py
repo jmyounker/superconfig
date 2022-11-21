@@ -15,3 +15,4 @@ def parameter_store_getter(
         refresh_interval_s=refresh_interval_s,
         retry_interval_s=retry_interval_s,
     )
+

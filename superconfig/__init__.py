@@ -68,6 +68,7 @@ from .smarts import Constant
 from .smarts import Counter
 from .smarts import Env
 from .smarts import Getter
+from .smarts import GetterAsLayer
 from .smarts import GetterStack
 from .smarts import Graft
 from .smarts import KeyExpansionLayer
