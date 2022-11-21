@@ -16,10 +16,10 @@
 #   TODO(jmyounker): Test reload flushes removed params
 #   TODO(jmyounker): Test reload finds added params
 # TODO(jmyounker): Add non-blocking fetching
-# TODO(jmyounker): Add RemapGetter
-# TODO(jmyounker): Prototype logging
+# TODO(jmyounker): Prototype logging system
 # DONE(jmyounker): Test converters
-# TODO(jmyounker): Unify loader operations into single context manager
+# DONE(jmyounker): Unify loader operations into single context manager
+# TODO(jmyounker): Consider getting rid of loader classes, and just using context managers.
 # TODO(jmyounker): Change loaders from io.Bytes to bytes
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Test loader expansions
@@ -29,12 +29,26 @@
 # DONE(jmyounker): Add fix for key expansion layer
 # TODO(jmyounker): Layer builder creates context
 # TODO(jmyounker): Add root layer to context
-# TODO(jmyounker): Smart layer searches root or GetterLayer
+# DONE(jmyounker): Smart layer searches root or GetterLayer
 # DONE(jmyounker): Create response mechanism
 # DONE(jmyounker): Thread response mechanism through
 # DONE(jmyounker): Wire in caching
 # TODO(jmyounker): Improving names in Response class
 # TODO(jmyounker): Improves names in cache classes
+# DONE(jmyounker): Create caching getter
+# DONE(jmyounker): Think about high-level UI
+# TODO(jmyounker): Build out one builder
+# TODO(jmyounker): Add sqlalchemy connector
+# TODO(jmyounker): Add sops file layer
+# TODO(jmyounker): Add from_key to extract values anywhere
+# TODO(jmyounker): Add generic parameter expansions for refreshes
+# TODO(jmyounker): Add format based autodetection
+# TODO(jmyounker): Improve TTL option names
+# TODO(jmyounker): TTL option value expansions
+# TODO(jmyounker): Add project root builder
+# TODO(jmyounker): Add username builder
+# TODO(jmyounker): Add match language to smart_layer key definitions
+# TODO(jmyounker): Automatch file suffixes in file loaders
 
 from .builders import parameter_store_getter
 from .config import Config
@@ -63,6 +77,7 @@ from .statics import ObjLayer
 from .statics import InnerObjLayer
 from .statics import IniLayer
 from .statics import PropertiesLayer
+from .smarts import CacheGetter
 from .smarts import CacheLayer
 from .smarts import Constant
 from .smarts import Counter

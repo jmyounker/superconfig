@@ -186,10 +186,10 @@ class CacheLayer:
             return cached_resp
         resp = lower_layer.get_item(key, context, config.NullLayer())
         if resp.is_found:
-            return self._cache(key, resp, now, self.timeout_s)
+            return _cache(self.cache, key, resp, now, self.timeout_s)
         if not self.negative_response_s:
             return resp
-        return self._cache(key, resp, now, self.negative_response_s)
+        return _cache(self.cache, key, resp, now, self.negative_response_s)
 
     def _cache(self, key, resp, now, ttl_s):
         if resp.expire is None:
@@ -199,6 +199,37 @@ class CacheLayer:
         else:
             self.cache[key] = resp
             return resp
+
+
+class CacheGetter:
+    def __init__(self, getter, timeout_s=5, negative_response_s=0):
+        self.getter = getter
+        self.cache = {}
+        self.timeout_s = timeout_s
+        self.negative_response_s = negative_response_s
+
+    def get_item(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        now = time.time()
+        cache_key = full_key(key, rest)
+        cached_resp = self.cache.get(cache_key, None)
+        if cached_resp is not None and cached_resp.still_unexpired(now):
+            return cached_resp
+        resp = self.getter.read(key, rest, context, config.NullLayer())
+        if resp.is_found:
+            return _cache(self.cache, cache_key, resp, now, self.timeout_s)
+        if not self.negative_response_s:
+            return resp
+        return _cache(self.cache, cache_key, resp, now, self.negative_response_s)
+
+
+def _cache(cache, cache_key, resp, now, ttl_s):
+    if resp.expire is None:
+        cache_resp = resp.cache_until(now + ttl_s)
+        cache[cache_key] = cache_resp
+        return cache_resp
+    else:
+        cache[cache_key] = resp
+        return resp
 
 
 class IndexGetterLayer:
@@ -218,3 +249,6 @@ class GetterAsLayer(config.Layer):
     def get_item(self, key, context, lower_layer: config.Layer) -> config.Response:
         return self.getter.read("", key.split("."), context, lower_layer)
 
+
+def full_key(key, rest):
+    return "{}.{}".format(key, ".".join(rest)).strip(".")
