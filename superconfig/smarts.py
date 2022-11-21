@@ -9,6 +9,7 @@ from typing import Optional
 from typing import Tuple
 
 from . import config
+from . import helpers
 
 
 class SmartLayer(config.Layer):
@@ -155,7 +156,7 @@ class Counter(Getter):
 class KeyExpansionLayer(config.Layer):
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
-        k = expand(key, expansions(key), context, lower_layer)
+        k = helpers.expand(key, helpers.expansions(key), context, lower_layer)
         if k is None:
             return config.ReadResult.NotFound, config.Continue.Go, None
         return lower_layer.get_item(k, context, config.NullLayer)

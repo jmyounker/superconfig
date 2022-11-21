@@ -263,3 +263,22 @@ def test_cache_records_have_distinct_expirations():
         with freezegun.freeze_time(now + datetime.timedelta(seconds=t)):
             for key, expected_value in samples:
                 assert c[key] == expected_value
+
+
+def test_key_expansion_layer():
+    s = sc.SmartLayer()
+    s["a.b"] = sc.Constant(5)
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.KeyExpansionLayer(),
+            sc.IndexLayer({
+                "a.b": 1,
+                "env": "b",
+            }),
+        ]
+    )
+    assert c["a.{env}"] == 1
+    assert c["a.b"] == 1
+    assert c["env"] == "b"
+    assert is_expected_getitem(c, "{env}", KeyError)
