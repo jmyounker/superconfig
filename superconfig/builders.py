@@ -75,7 +75,7 @@ def parameter_store_getter(
 #         file_layer(name="{env.user}/.config/overrides.json", refresh_s=from_key("{config.refresh}")),
 #         smart_layer(
 #             {
-#                 "db.conn.*.*": aws_secrets_manager_graft(name="db.conn.{env}.{1}.{2}", kind=format.Json)
+#                 "db.conn.*.*": aws_secrets_manager_graft(name="db.conn.{env}.{1}.{2}", format=format.Json)
 #             }
 #         ),
 #         aws_parameter_store_layer(prefix="/{env}/app", ttl_s=30, neg_ttl_s=10, refresh_s=60),
