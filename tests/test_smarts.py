@@ -311,7 +311,7 @@ def test_smart_layer_root_getter(tmp_path):
         sc.Context(),
         [
             sc.SmartLayer({
-                ".": sc.AutoRefreshGetter(
+                "": sc.AutoRefreshGetter(
                     layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(sc.bytes_from_file(x)))),
                     fetcher=sc.FileFetcher(str(f)),
                 ),

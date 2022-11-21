@@ -23,13 +23,11 @@ class SmartLayer(config.Layer):
         self.getters[key] = getter
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
-        if key == "":
-            if "." not in self.getters:
-                return config.Response.not_found
-            return self.getters["."].read("", [], context, lower_layer)
+        if key == "" and "" not in self.getters:
+            return config.Response.not_found
         indexes = key.split(".")
-        if "." in self.getters:
-            resp = self.getters["."].read("", indexes[0:len(indexes)], context, lower_layer)
+        if "" in self.getters:
+            resp = self.getters[""].read("", indexes[0:len(indexes)], context, lower_layer)
             if resp.is_found or resp.must_stop or resp.go_next_layer:
                 return resp
         for i in range(1, len(indexes)+1):
