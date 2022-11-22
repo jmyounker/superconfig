@@ -220,7 +220,7 @@ def test_cache_caches_records():
     timeout_s = 5
     with freezegun.freeze_time():
         c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(timeout_s=timeout_s),
+            sc.CacheLayer(ttl_s=timeout_s),
             sc.SmartLayer({
                 "a": sc.Counter(0),
             })
@@ -233,7 +233,7 @@ def test_cache_flushes_after_timeout():
     timeout_s = 3
     with freezegun.freeze_time():
         c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(timeout_s=timeout_s),
+            sc.CacheLayer(ttl_s=timeout_s),
             sc.SmartLayer({
                 "a": sc.Counter(0),
             })
@@ -254,7 +254,7 @@ def test_cache_records_have_distinct_expirations():
         (9, [("a", 2), ("b", 12)]),
     ]
     c = sc.layered_config(sc.Context(), [
-        sc.CacheLayer(timeout_s=timeout_s),
+        sc.CacheLayer(ttl_s=timeout_s),
         sc.SmartLayer({
             "a": sc.Counter(0),
             "b": sc.Counter(10),

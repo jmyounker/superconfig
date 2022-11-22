@@ -43,7 +43,7 @@
 # TODO(jmyounker): Add from_key to extract values anywhere
 # TODO(jmyounker): Add generic parameter expansions for refreshes
 # TODO(jmyounker): Add format based autodetection
-# TODO(jmyounker): Improve TTL option names
+# DONE(jmyounker): Improve TTL option names
 # TODO(jmyounker): TTL option value expansions
 # TODO(jmyounker): Add project root builder
 # TODO(jmyounker): Add username builder
