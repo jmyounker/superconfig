@@ -45,7 +45,7 @@
 # TODO(jmyounker): Add format based autodetection
 # DONE(jmyounker): Improve TTL option names
 # TODO(jmyounker): TTL option value expansions
-# TODO(jmyounker): Add project root builder
+# TODO(jmyounker): Add project root directory builder
 # TODO(jmyounker): Add username builder
 # TODO(jmyounker): Add match language to smart_layer key definitions
 # TODO(jmyounker): Automatch file suffixes in file loaders

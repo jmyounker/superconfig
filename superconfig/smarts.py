@@ -174,10 +174,10 @@ class Graft(Getter):
 
 
 class CacheLayer:
-    def __init__(self, timeout_s=5, negative_response_s=0):
+    def __init__(self, ttl_s=5, negitive_ttl_s=0):
         self.cache = {}
-        self.timeout_s = timeout_s
-        self.negative_response_s = negative_response_s
+        self.ttl_s = ttl_s
+        self.negative_ttl_s = negitive_ttl_s
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> config.Response:
         now = time.time()
@@ -186,10 +186,10 @@ class CacheLayer:
             return cached_resp
         resp = lower_layer.get_item(key, context, config.NullLayer())
         if resp.is_found:
-            return _cache(self.cache, key, resp, now, self.timeout_s)
-        if not self.negative_response_s:
+            return _cache(self.cache, key, resp, now, self.ttl_s)
+        if not self.negative_ttl_s:
             return resp
-        return _cache(self.cache, key, resp, now, self.negative_response_s)
+        return _cache(self.cache, key, resp, now, self.negative_ttl_s)
 
     def _cache(self, key, resp, now, ttl_s):
         if resp.expire is None:
@@ -202,11 +202,11 @@ class CacheLayer:
 
 
 class CacheGetter:
-    def __init__(self, getter, timeout_s=5, negative_response_s=0):
+    def __init__(self, getter, ttl_s=5, negative_ttl_s=0):
         self.getter = getter
         self.cache = {}
-        self.timeout_s = timeout_s
-        self.negative_response_s = negative_response_s
+        self.ttl_s = ttl_s
+        self.negative_ttl_s = negative_ttl_s
 
     def get_item(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
         now = time.time()
@@ -216,10 +216,10 @@ class CacheGetter:
             return cached_resp
         resp = self.getter.read(key, rest, context, config.NullLayer())
         if resp.is_found:
-            return _cache(self.cache, cache_key, resp, now, self.timeout_s)
-        if not self.negative_response_s:
+            return _cache(self.cache, cache_key, resp, now, self.ttl_s)
+        if not self.negative_ttl_s:
             return resp
-        return _cache(self.cache, cache_key, resp, now, self.negative_response_s)
+        return _cache(self.cache, cache_key, resp, now, self.negative_ttl_s)
 
 
 def _cache(cache, cache_key, resp, now, ttl_s):
