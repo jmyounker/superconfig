@@ -208,7 +208,7 @@ class CacheGetter:
         self.ttl_s = ttl_s
         self.negative_ttl_s = negative_ttl_s
 
-    def get_item(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
         now = time.time()
         cache_key = full_key(key, rest)
         cached_resp = self.cache.get(cache_key, None)

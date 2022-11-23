@@ -1,13 +1,38 @@
 """The high level interface for building config trees."""
 
+from . import config
 from . import smarts
 from . import loaders
 
 
-def parameter_store_getter(
+def config_stack(*args, context=None):
+    return config.Config(context or config.Context(), *args)
+
+
+def aws_parameter_store_layer(
+        parameter_store_base_path,
+        refresh_interval_s=60,
+        retry_interval_s=10,
+        ttl_s=30,
+        negative_ttl_s=10,
+):
+    return smarts.GetterAsLayer(
+        aws_parameter_store_getter(
+            parameter_store_base_path=parameter_store_base_path,
+            refresh_interval_s=refresh_interval_s,
+            retry_interval_s=retry_interval_s,
+            ttl_s=ttl_s,
+            negative_ttl_s=negative_ttl_s,
+        )
+    )
+
+
+def aws_parameter_store_getter(
     parameter_store_base_path=None,
     refresh_interval_s=60,
     retry_interval_s=10,
+    ttl_s=30,
+    negative_ttl_s=10,
 ):
     return smarts.CacheGetter(
         loaders.AutoRefreshGetter(
@@ -15,18 +40,12 @@ def parameter_store_getter(
             fetcher=loaders.AwsParameterStoreFetcher(root=parameter_store_base_path),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
-        )
+        ),
+        ttl_s=ttl_s,
+        negative_ttl_s=negative_ttl_s,
     )
 
 
-# def parameter_store_layer():
-#     pass
-#
-#
-# def parameter_store_graft():
-#     pass
-#
-#
 # def file_layer(format=Json|Yaml|Ini|Toml|Properties):
 #     pass
 #
@@ -64,7 +83,7 @@ def parameter_store_getter(
 #     pass
 #
 #
-# config =layer_config(
+# config = layer_config(
 #     [
 #         cache_layer(ttl_s=30, neg_ttl_s=10),
 #         smart_layer(
