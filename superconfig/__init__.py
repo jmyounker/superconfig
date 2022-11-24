@@ -20,7 +20,7 @@
 # DONE(jmyounker): Test converters
 # DONE(jmyounker): Unify loader operations into single context manager
 # TODO(jmyounker): Consider getting rid of loader classes, and just using context managers.
-# TODO(jmyounker): Change loaders from io.Bytes to bytes
+# DONE(jmyounker): Change loaders from io.Bytes to bytes
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Add path expansion to AwsSecretsManagerLoader

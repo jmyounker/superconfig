@@ -214,7 +214,7 @@ class CacheGetter:
         cached_resp = self.cache.get(cache_key, None)
         if cached_resp is not None and cached_resp.still_unexpired(now):
             return cached_resp
-        resp = self.getter.read(key, rest, context, config.NullLayer())
+        resp = self.getter.read(key, rest, context, lower_layer)
         if resp.is_found:
             return _cache(self.cache, cache_key, resp, now, self.ttl_s)
         if not self.negative_ttl_s:

@@ -10,7 +10,7 @@ import superconfig as sc
 
 
 def test_file_layer_loader_file_missing(tmp_path):
-    c = sc.layered_config([sc.FileLayerLoader(sc.ObjLayer.from_file, str(tmp_path / "foo.json"))])
+    c = sc.layered_config([sc.FileLayerLoader(sc.ObjLayer.from_bytes, str(tmp_path / "foo.json"))])
     with pytest.raises(KeyError):
         _ = c["a"]
 
@@ -18,7 +18,7 @@ def test_file_layer_loader_file_missing(tmp_path):
 def test_file_layer_loader_loads_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
-    c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(sc.ObjLayer.from_file, str(f))])
+    c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(sc.ObjLayer.from_bytes, str(f))])
     assert c["a"] == 1
 
 
@@ -29,7 +29,7 @@ def test_file_layer_loader_does_not_reload_during_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
         )])
@@ -45,7 +45,7 @@ def test_file_layer_loader_does_not_load_unchanged_files(tmp_path):
 
     def load_checking_loader(f):
         loaded[0] = True
-        return sc.ObjLayer.from_file(f)
+        return sc.ObjLayer.from_bytes(f)
 
     check_period_s = 3
     now = datetime.datetime.now()
@@ -73,7 +73,7 @@ def test_file_layer_loader_loads_changed_files_after_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
         )])
@@ -91,7 +91,7 @@ def test_file_layer_loader_w_clear_clears_config_after_file_removed(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
             clear_on_removal=True,
@@ -111,7 +111,7 @@ def test_file_layer_loader_wo_clear_keeps_config_after_file_removal(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
         )])
@@ -136,7 +136,7 @@ def test_secmgr_load_single_value_string():
                     {
                         "a.b": sc.AutoRefreshGetter(
                             layer_constructor=lambda f: sc.ConstantLayer(
-                                sc.string_from_bytes(sc.bytes_from_file(f), encoding='utf8')),
+                                sc.string_from_bytes(f, encoding='utf8')),
                             fetcher=sc.SecretsManagerFetcher(),
                         )
                     }
@@ -159,7 +159,7 @@ def test_secmgr_load_single_value_binary():
             sc.SmartLayer(
                 {
                     "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(sc.bytes_from_file(f)),
+                        layer_constructor=lambda f: sc.ConstantLayer(f),
                         fetcher=sc.SecretsManagerFetcher(),
                     )
                 }
@@ -183,7 +183,7 @@ def test_secmgr_load_from_static_name():
                 {
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                            sc.string_from_bytes(f)),
                         fetcher=sc.SecretsManagerFetcher(
                             name="c.d"
                         ),
@@ -209,7 +209,7 @@ def test_secmgr_load_from_name_template():
                 {
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                            sc.string_from_bytes(f)),
                         fetcher=sc.SecretsManagerFetcher(
                             name="c-{env}"
                         ),
@@ -238,7 +238,7 @@ def test_secmgr_load_from_name_template_fails():
                 {
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(sc.bytes_from_file(f))),
+                            sc.string_from_bytes(f)),
                         fetcher=sc.SecretsManagerFetcher(
                             name="c-{env}"
                         ),
@@ -260,7 +260,7 @@ def test_autoload_enabled_when_true(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
             is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
@@ -278,7 +278,7 @@ def test_autoload_disabled_when_false(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
             is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
@@ -297,7 +297,7 @@ def test_autoload_disabled_when_missing(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
             is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
@@ -313,7 +313,7 @@ def test_autoload_filename_expansion_works(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(tmp_path / "foo-{env}.json"),
             refresh_interval_s=check_period_s,
         ),
@@ -330,7 +330,7 @@ def test_autoload_filename_expansion_fails(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_file,
+            sc.ObjLayer.from_bytes,
             str(tmp_path / "foo-{env}.json"),
             refresh_interval_s=check_period_s,
         ),
@@ -347,7 +347,7 @@ def test_parameterstore_implicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.parameter_store_getter()}))
+    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter()}))
     assert c["a.b"] == "foo"
 
 
@@ -359,7 +359,7 @@ def test_parameterstore_explicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.parameter_store_getter("/c")}))
+    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter("/c")}))
     assert c["a.b"] == "foo"
 
 
@@ -381,7 +381,7 @@ def test_parameter_store_value_handling():
         Type='SecureString',
         Value='3',
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.parameter_store_getter("/a")}))
+    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter("/a")}))
     assert c["a.b.c"] == "1"
     assert c["a.b.c.d"] == ["2a", "2b"]
     # There are significant differences between what moto returns and what real AWS, so
@@ -400,7 +400,7 @@ def test_parameterstore_path_expansion():
     c = sc.layered_config(
         sc.Context(),
         [
-            sc.SmartLayer({"a": sc.parameter_store_getter("/a/{env}/root")}),
+            sc.SmartLayer({"a": sc.aws_parameter_store_getter("/a/{env}/root")}),
             sc.ObjLayer({"env": "stage"}),
         ]
     )

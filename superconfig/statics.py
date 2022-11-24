@@ -40,8 +40,8 @@ class ObjLayer(config.Layer):
         return config.Response.found(v)
 
     @classmethod
-    def from_file(cls, f):
-        return cls(json.load(f))
+    def from_bytes(cls, x, encoding="utf8"):
+        return cls(json.loads(x.decode(encoding)))
 
 
 class InnerObjLayer(config.Layer):

@@ -7,9 +7,7 @@ constructor:
     c = lambda f: DictLayer(
         obj_from_json(
             string_from_bytes(
-                bytes_from_base64(
-                    bytes_from_file(f)
-                ),
+                bytes_from_base64(f),
                 encoding='utf8'
             )
         )

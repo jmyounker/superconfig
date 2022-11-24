@@ -106,11 +106,11 @@ class SecretsManagerFetcher(AbstractFetcher):
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
         try:
-            yield io.BytesIO(self.value_from_secret(
+            yield self.value_from_secret(
                 self.get_secret(
                     self.get_client(),
                     self.name(key, context, lower_layer),
-                    self.stage())))
+                    self.stage()))
         except Exception as e:
             raise FetchFailure()
 
@@ -177,7 +177,7 @@ class FileFetcher(AbstractFetcher):
             # be found as out-of-date on the next load.
             s = os.stat(filename)
             with open(filename, 'rb') as f:
-                yield f
+                yield f.read()
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
             raise DataSourceMissing()
