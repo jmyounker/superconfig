@@ -50,7 +50,7 @@ class AutoRefreshGetter:
     ):
         self.layer_constructor = layer_constructor
         self.fetcher = fetcher
-        self.loaded_layer = ARef(config.NullLayer)
+        self.loaded_layer = AtomicRef(config.NullLayer)
         self.refresh_interval_s = refresh_interval_s
         self.retry_interval_s = retry_interval_s
         self.next_load_s = 0
