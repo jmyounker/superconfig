@@ -1,17 +1,25 @@
 import contextlib
-import io
 import os
 import time
+from typing import Any
+from typing import Tuple
 
 import boto3
 
 import config
-
-from typing import Any
-from typing import Tuple
-
 import converters
 import helpers
+
+
+class AtomicRef:
+    def __init__(self, x):
+        self.value = {"": x}
+
+    def get(self):
+        return self.value[""]
+
+    def set(self, x):
+        self.value[""] = x
 
 
 class AutoRefreshGetter:
@@ -42,7 +50,7 @@ class AutoRefreshGetter:
     ):
         self.layer_constructor = layer_constructor
         self.fetcher = fetcher
-        self.loaded_layer = config.NullLayer
+        self.loaded_layer = ARef(config.NullLayer)
         self.refresh_interval_s = refresh_interval_s
         self.retry_interval_s = retry_interval_s
         self.next_load_s = 0
@@ -55,27 +63,27 @@ class AutoRefreshGetter:
     def read(self, key, rest, context, lower_layer):
         now = time.time()
         if self.next_load_s >= now:
-            return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
+            return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
         try:
             if self.is_enabled(key, rest, context, lower_layer):
                 with self.fetcher.load(now, key, rest, context, lower_layer) as f:
                     if f is not None:
-                        self.loaded_layer = self.layer_constructor(f)
+                        self.loaded_layer.set(self.layer_constructor(f))
                 self.last_successful_load = now
                 self.next_load_s += now + self.refresh_interval_s
         except DataSourceMissing:
             if self.clear_on_removal:
-                self.loaded_layer = config.NullLayer
+                self.loaded_layer.set(config.NullLayer)
             self.next_load_s = now + self.retry_interval_s
         except FetchFailure:
             if self.clear_on_fetch_failure:
-                self.loaded_layer = config.NullLayer
+                self.loaded_layer.set(config.NullLayer)
             self.next_load_s += now + self.retry_interval_s
         except converters.LoadFailure:
             if self.clear_on_load_failure:
-                self.loaded_layer = config.NullLayer
+                self.loaded_layer.set(config.NullLayer)
             self.next_load_s += now + self.retry_interval_s
-        return self.loaded_layer.get_item(".".join(rest), context, lower_layer)
+        return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
 
     @staticmethod
     def always_enabled(key, rest, context, lower_layer):
