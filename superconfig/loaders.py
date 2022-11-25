@@ -1,6 +1,7 @@
 import contextlib
 import os
 import time
+import threading
 from typing import Any
 from typing import Tuple
 
@@ -48,6 +49,7 @@ class AutoRefreshGetter:
             clear_on_load_failure=False,
             is_enabled=None
     ):
+        self.load_lock = threading.Lock()
         self.layer_constructor = layer_constructor
         self.fetcher = fetcher
         self.loaded_layer = AtomicRef(config.NullLayer)
@@ -64,25 +66,28 @@ class AutoRefreshGetter:
         now = time.time()
         if self.next_load_s >= now:
             return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
-        try:
-            if self.is_enabled(key, rest, context, lower_layer):
-                with self.fetcher.load(now, key, rest, context, lower_layer) as f:
-                    if f is not None:
-                        self.loaded_layer.set(self.layer_constructor(f))
-                self.last_successful_load = now
-                self.next_load_s += now + self.refresh_interval_s
-        except DataSourceMissing:
-            if self.clear_on_removal:
-                self.loaded_layer.set(config.NullLayer)
-            self.next_load_s = now + self.retry_interval_s
-        except FetchFailure:
-            if self.clear_on_fetch_failure:
-                self.loaded_layer.set(config.NullLayer)
-            self.next_load_s += now + self.retry_interval_s
-        except converters.LoadFailure:
-            if self.clear_on_load_failure:
-                self.loaded_layer.set(config.NullLayer)
-            self.next_load_s += now + self.retry_interval_s
+        if self.load_lock.acquire(blocking=False):
+            try:
+                if self.is_enabled(key, rest, context, lower_layer):
+                    with self.fetcher.load(now, key, rest, context, lower_layer) as f:
+                        if f is not None:
+                            self.loaded_layer.set(self.layer_constructor(f))
+                    self.last_successful_load = now
+                    self.next_load_s += now + self.refresh_interval_s
+            except DataSourceMissing:
+                if self.clear_on_removal:
+                    self.loaded_layer.set(config.NullLayer)
+                self.next_load_s = now + self.retry_interval_s
+            except FetchFailure:
+                if self.clear_on_fetch_failure:
+                    self.loaded_layer.set(config.NullLayer)
+                self.next_load_s += now + self.retry_interval_s
+            except converters.LoadFailure:
+                if self.clear_on_load_failure:
+                    self.loaded_layer.set(config.NullLayer)
+                self.next_load_s += now + self.retry_interval_s
+            finally:
+                self.load_lock.release()
         return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
 
     @staticmethod
