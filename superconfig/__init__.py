@@ -15,7 +15,7 @@
 #   DONE(jmyounker): Accept expandable prefix
 #   TODO(jmyounker): Test reload flushes removed params
 #   TODO(jmyounker): Test reload finds added params
-# TODO(jmyounker): Add non-blocking fetching
+# DONE(jmyounker): Add non-blocking fetching
 # TODO(jmyounker): Prototype logging system
 # DONE(jmyounker): Test converters
 # DONE(jmyounker): Unify loader operations into single context manager
