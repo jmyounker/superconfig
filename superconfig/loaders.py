@@ -312,7 +312,6 @@ class ParameterNode:
             p = resp["Parameter"]
         except Exception:
             return config.Response.not_found_next
-        print(p)
         if p["Type"] == "String":
             return config.Response.found_next(p["Value"])
         elif p["Type"] == "StringList":

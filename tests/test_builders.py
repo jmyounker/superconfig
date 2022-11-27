@@ -3,6 +3,7 @@ import datetime
 import boto3
 import freezegun
 import moto
+import pytest
 
 import superconfig as sc
 
@@ -91,3 +92,129 @@ def test_parameterstore_layer_refreshes_after_ttl():
         )
     with freezegun.freeze_time(now + datetime.timedelta(seconds=post_update_read_at_s)):
         assert c["a.b"] == "bar"
+
+
+def test_value_pulls_from_below():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value()}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    assert c["a.b"] == "1"
+
+
+def test_value_pulls_from_all_the_way_below():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value()}),
+        sc.ObjLayer({}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    assert c["a.b"] == "1"
+
+
+def test_performs_transform():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(transform=int)}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    assert c["a.b"] == 1
+
+
+def test_with_single_envar_pulls_from_envar(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envar="FOO")}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+
+    )
+    monkeypatch.setenv("FOO", "2")
+    assert c["a.b"] == "2"
+
+
+def test_with_single_envar_pulls_from_below_if_envar_missing(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envar="FOO")}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+
+    )
+    monkeypatch.delenv("FOO", raising=False)
+    assert c["a.b"] == "1"
+
+def test_with_multi_envars_finds_first_one(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envars=["FOO", "BAR"])}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+
+    )
+    monkeypatch.setenv("FOO", "2")
+    monkeypatch.setenv("BAR", "3")
+    assert c["a.b"] == "2"
+
+
+def test_with_multi_envars_moves_to_second_if_first_missing(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envars=["FOO", "BAR"])}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+
+    )
+    monkeypatch.delenv("FOO", raising=False)
+    monkeypatch.setenv("BAR", "3")
+    assert c["a.b"] == "3"
+
+
+def test_with_envar_and_envars_foo_stacks_first(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envar="FOO", envars=["BAR"])}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    monkeypatch.setenv("FOO", "2")
+    monkeypatch.setenv("BAR", "3")
+    assert c["a.b"] == "2"
+
+
+def test_with_envar_and_envars_list_stacks_afterwards(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envar="FOO", envars=["BAR"])}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    monkeypatch.delenv("FOO", raising=False)
+    monkeypatch.setenv("BAR", "3")
+    assert c["a.b"] == "3"
+
+
+def test_transform_affects_envars(monkeypatch):
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(envar="FOO", envars=["BAR"], transform=int)}),
+        sc.ObjLayer({"a": {"b": "1"}}),
+    )
+    monkeypatch.setenv("FOO", "2")
+    monkeypatch.setenv("BAR", "3")
+    assert c["a.b"] == 2
+
+
+def test_missing_value_raises_key_error_with_transform():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(transform=int)}),
+    )
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
+
+
+def test_missing_value_raises_key_error_without_transform_too():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value()}),
+    )
+    with pytest.raises(KeyError):
+        _ = c["a.b"]
+
+
+def test_with_default():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(default="1")}),
+    )
+    assert c["a.b"] == "1"
+
+
+def test_default_passes_through_transform():
+    c = sc.config_stack(
+        sc.SmartLayer({"a.b": sc.value(default="1", transform=int)}),
+    )
+    assert c["a.b"] == 1

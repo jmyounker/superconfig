@@ -37,7 +37,6 @@
 # TODO(jmyounker): Improves names in cache classes
 # DONE(jmyounker): Create caching getter
 # DONE(jmyounker): Think about high-level UI
-# TODO(jmyounker): Build out one builder
 # TODO(jmyounker): Add sqlalchemy connector
 # TODO(jmyounker): Add sops file layer
 # TODO(jmyounker): Add from_key to extract values anywhere
@@ -51,11 +50,14 @@
 # TODO(jmyounker): Automatch file suffixes in file loaders
 # TODO(jmyounker): Move AWS loaders into aws package
 # TODO(jmyounker): Create file builder
-# TODO(jmyounker): Create AWS parameter store builder
+# DONE(jmyounker): Create AWS parameter store builder
+# DONE(jmyounker): Value builder
+# TODO(jmyounker): Create AWS secrets builder
 
 from .builders import aws_parameter_store_getter
 from .builders import aws_parameter_store_layer
 from .builders import config_stack
+from .builders import value
 from .config import Config
 from .config import Context
 from .config import ConstantLayer

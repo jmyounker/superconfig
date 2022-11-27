@@ -252,3 +252,13 @@ class GetterAsLayer(config.Layer):
 
 def full_key(key, rest):
     return "{}.{}".format(key, ".".join(rest)).strip(".")
+
+
+class BaseKeyReference(Getter):
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        return lower_layer.get_item(key, context, config.NullLayer)
+
+
+class FullKeyReference(Getter):
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        return lower_layer.get_item(full_key(key, rest), context, config.NullLayer)

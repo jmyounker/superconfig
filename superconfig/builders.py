@@ -6,7 +6,7 @@ from . import loaders
 
 
 def config_stack(*args, context=None):
-    return config.Config(context or config.Context(), *args)
+    return config.layered_config(context or config.Context(), list(args))
 
 
 def aws_parameter_store_layer(
@@ -131,3 +131,29 @@ def aws_parameter_store_getter(
 # )
 
 
+class NoDefault:
+    pass
+
+
+def value(
+    transform=None,
+    envar=None,
+    envars=None,
+    default=NoDefault,
+):
+    if envars is None:
+        envars = []
+    if envar is not None:
+        envars = [envar] + envars
+    getters = []
+    for env in envars:
+        getters.append(smarts.Env(env))
+    getters.append(smarts.BaseKeyReference())
+    if default != NoDefault:
+        getters.append(smarts.Constant(default))
+    else:
+        getters.append(smarts.Stop)
+    stack = smarts.GetterStack(getters)
+    if transform is None:
+        return stack
+    return smarts.Transform(transform, stack)
