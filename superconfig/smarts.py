@@ -274,3 +274,39 @@ class ExpansionGetter(Getter):
             return resp
         x = helpers.expand(resp.value, helpers.expansions(resp.value), context, lower_layer)
         return resp.new_value(x)
+
+
+def config_value_constant_key(key):
+
+    def f(context, lower_layer, key=key):
+        resp = lower_layer.get_item(key, context, config.NullConfig)
+        if not resp.found:
+            raise KeyError()
+        return resp.value
+    return f
+
+
+def constant_value(c):
+    return lambda context, lower_layer, c=c: c
+
+
+def expanded(f):
+
+    def _expansion(context, lower_layer):
+        x = f(context, lower_layer)
+        return helpers.expand(x, helpers.expansions(x), context, lower_layer)
+    return _expansion
+
+
+def config_value(key):
+    expansions = helpers.expansions(key)
+    if not expansions:
+        return config_value_constant_key(key)
+
+    def f(context, lower_layer, key=key, expansions=expansions):
+        target_key = helpers.expand(key, expansions, context, lower_layer)
+        resp = lower_layer.get_item(target_key, context, config.NullConfig)
+        if not resp.found:
+            raise KeyError()
+        return resp.value
+    return f
