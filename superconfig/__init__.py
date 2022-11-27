@@ -48,7 +48,7 @@
 # TODO(jmyounker): Add username builder
 # TODO(jmyounker): Add match language to smart_layer key definitions
 # TODO(jmyounker): Automatch file suffixes in file loaders
-# TODO(jmyounker): Move AWS loaders into aws package
+# DONE(jmyounker): Move AWS loaders into aws package
 # TODO(jmyounker): Create file builder
 # DONE(jmyounker): Create AWS parameter store builder
 # DONE(jmyounker): Value builder
