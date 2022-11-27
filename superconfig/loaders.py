@@ -84,6 +84,10 @@ class AutoRefreshGetter:
                 if self.clear_on_load_failure:
                     self.loaded_layer.set(config.NullLayer)
                 self.next_load_s += now + self.retry_interval_s
+            except Exception:
+                if self.clear_on_fetch_failure:
+                    self.loaded_layer.set(config.NullLayer)
+                self.next_load_s += now + self.retry_interval_s
             finally:
                 self.load_lock.release()
         return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)

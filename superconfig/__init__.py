@@ -54,6 +54,9 @@
 # DONE(jmyounker): Value builder
 # TODO(jmyounker): Create AWS secrets builder
 
+from .aws import AwsParameterStoreFetcher
+from .aws import config_switch
+from .aws import SecretsManagerFetcher
 from .builders import aws_parameter_store_getter
 from .builders import aws_parameter_store_layer
 from .builders import config_stack
@@ -74,7 +77,6 @@ from .converters import string_from_bytes
 from .helpers import expansions
 from .helpers import expand
 from .loaders import AutoRefreshGetter
-from aws import AwsParameterStoreFetcher, SecretsManagerFetcher, config_switch
 from .loaders import FetchFailure
 from .loaders import FileFetcher
 from .loaders import FileLayerLoader
