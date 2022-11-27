@@ -96,17 +96,6 @@ class ValueTransformException(Exception):
         self.exception = exception
 
 
-class ReadResult:
-    NotFound = 0  # Not found, continue search
-    Found = 1  # Found, do not continue search
-
-
-class Continue:
-    Stop = 0  # Terminate
-    Go = 1  # Continue
-    NextLayer = 2  # Continue in th next layer
-
-
 class Context:
     """State which is passed between levels.
 
