@@ -262,3 +262,15 @@ class BaseKeyReference(Getter):
 class FullKeyReference(Getter):
     def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
         return lower_layer.get_item(full_key(key, rest), context, config.NullLayer)
+
+
+class ExpansionGetter(Getter):
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        resp = self.getter(key, rest, context, lower_layer)
+        if not resp.found:
+            return resp
+        x = helpers.expand(resp.value, helpers.expansions(resp.value), context, lower_layer)
+        return resp.new_value(x)

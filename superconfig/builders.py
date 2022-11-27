@@ -157,3 +157,11 @@ def value(
     if transform is None:
         return stack
     return smarts.Transform(transform, stack)
+
+
+def file_layer(
+    filename,
+    refresh_interval_30,
+    retry_interval_s=10,
+):
+    pass
