@@ -1,5 +1,5 @@
 """The high level interface for building config trees."""
-
+import aws
 from . import config
 from . import smarts
 from . import loaders
@@ -37,7 +37,7 @@ def aws_parameter_store_getter(
     return smarts.CacheGetter(
         loaders.AutoRefreshGetter(
             layer_constructor=smarts.IndexGetterLayer,
-            fetcher=loaders.AwsParameterStoreFetcher(root=parameter_store_base_path),
+            fetcher=aws.AwsParameterStoreFetcher(root=parameter_store_base_path),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
         ),

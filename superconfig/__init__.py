@@ -74,12 +74,10 @@ from .converters import string_from_bytes
 from .helpers import expansions
 from .helpers import expand
 from .loaders import AutoRefreshGetter
-from .loaders import AwsParameterStoreFetcher
-from .loaders import config_switch
+from aws import AwsParameterStoreFetcher, SecretsManagerFetcher, config_switch
 from .loaders import FetchFailure
 from .loaders import FileFetcher
 from .loaders import FileLayerLoader
-from .loaders import SecretsManagerFetcher
 from .statics import ObjLayer
 from .statics import InnerObjLayer
 from .statics import IniLayer

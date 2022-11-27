@@ -6,6 +6,7 @@ import freezegun
 import moto
 import pytest
 
+import aws
 import superconfig as sc
 
 
@@ -137,7 +138,7 @@ def test_secmgr_load_single_value_string():
                         "a.b": sc.AutoRefreshGetter(
                             layer_constructor=lambda f: sc.ConstantLayer(
                                 sc.string_from_bytes(f, encoding='utf8')),
-                            fetcher=sc.SecretsManagerFetcher(),
+                            fetcher=aws.SecretsManagerFetcher(),
                         )
                     }
                 ),
@@ -160,7 +161,7 @@ def test_secmgr_load_single_value_binary():
                 {
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(f),
-                        fetcher=sc.SecretsManagerFetcher(),
+                        fetcher=aws.SecretsManagerFetcher(),
                     )
                 }
             ),
@@ -184,7 +185,7 @@ def test_secmgr_load_from_static_name():
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
                             sc.string_from_bytes(f)),
-                        fetcher=sc.SecretsManagerFetcher(
+                        fetcher=aws.SecretsManagerFetcher(
                             name="c.d"
                         ),
                     )
@@ -210,7 +211,7 @@ def test_secmgr_load_from_name_template():
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
                             sc.string_from_bytes(f)),
-                        fetcher=sc.SecretsManagerFetcher(
+                        fetcher=aws.SecretsManagerFetcher(
                             name="c-{env}"
                         ),
                     )
@@ -239,7 +240,7 @@ def test_secmgr_load_from_name_template_fails():
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(
                             sc.string_from_bytes(f)),
-                        fetcher=sc.SecretsManagerFetcher(
+                        fetcher=aws.SecretsManagerFetcher(
                             name="c-{env}"
                         ),
                     )
@@ -263,7 +264,7 @@ def test_autoload_enabled_when_true(tmp_path):
             sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
-            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+            is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
         sc.SmartLayer({
             "sc.file_layer.is_enabled": sc.Constant(True),
@@ -281,7 +282,7 @@ def test_autoload_disabled_when_false(tmp_path):
             sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
-            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+            is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
         sc.SmartLayer({
             "sc.file_layer.is_enabled": sc.Constant(False),
@@ -300,7 +301,7 @@ def test_autoload_disabled_when_missing(tmp_path):
             sc.ObjLayer.from_bytes,
             str(f),
             refresh_interval_s=check_period_s,
-            is_enabled=sc.config_switch("sc.file_layer.is_enabled"),
+            is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
     ])
     with pytest.raises(KeyError):
