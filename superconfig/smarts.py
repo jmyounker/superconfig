@@ -269,15 +269,78 @@ class ExpansionGetter(Getter):
         self.getter = getter
 
     def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
-        resp = self.getter(key, rest, context, lower_layer)
+        resp = self.getter.read(key, rest, context, lower_layer)
         if not resp.found:
             return resp
         x = helpers.expand(resp.value, helpers.expansions(resp.value), context, lower_layer)
         return resp.new_value(x)
 
 
+class BaseKeyGetter():
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        return self.getter.read(key, [], context, lower_layer)
+
+
+
+class ExpandedKeyGetter():
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        expanded_key = helpers.expand(key, helpers.expansions(key), context, lower_layer)
+        return self.getter.read(expanded_key, [], context, lower_layer)
+
+
+class FullKeyGetter():
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        return self.getter.read(full_key(key, rest), [], context, lower_layer)
+
+
+def via(getter, key="", rest=None):
+    if rest is None:
+        rest = []
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, key=key, getter=getter):
+        return getter.read(key, rest, context, lower_layer)
+    return f
+
+
+def expansion(c):
+    expansions = helpers.expansions(c)
+    if not expansions:
+        return config_value_constant_key(c)
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, c=c, expansions=expansions):
+        return helpers.expand(c, expansions, context, lower_layer)
+    return f
+
+
+def config_value(key):
+    expansions = helpers.expansions(key)
+    if not expansions:
+        return config_value_constant_key(key)
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, key=key, expansions=expansions):
+        target_key = helpers.expand(key, expansions, context, lower_layer)
+        resp = lower_layer.get_item(target_key, context, config.NullConfig)
+        if not resp.found:
+            raise KeyError()
+        return resp.value
+    return f
+
+
 def config_value_constant_key(key):
 
+    # noinspection PyShadowingNames
     def f(context, lower_layer, key=key):
         resp = lower_layer.get_item(key, context, config.NullConfig)
         if not resp.found:
@@ -286,7 +349,7 @@ def config_value_constant_key(key):
     return f
 
 
-def constant_value(c):
+def constant(c):
     return lambda context, lower_layer, c=c: c
 
 
@@ -296,17 +359,3 @@ def expanded(f):
         x = f(context, lower_layer)
         return helpers.expand(x, helpers.expansions(x), context, lower_layer)
     return _expansion
-
-
-def config_value(key):
-    expansions = helpers.expansions(key)
-    if not expansions:
-        return config_value_constant_key(key)
-
-    def f(context, lower_layer, key=key, expansions=expansions):
-        target_key = helpers.expand(key, expansions, context, lower_layer)
-        resp = lower_layer.get_item(target_key, context, config.NullConfig)
-        if not resp.found:
-            raise KeyError()
-        return resp.value
-    return f

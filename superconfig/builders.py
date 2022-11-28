@@ -1,8 +1,9 @@
 """The high level interface for building config trees."""
 import aws
 from . import config
-from . import smarts
+from . import helpers
 from . import loaders
+from . import smarts
 
 
 def config_stack(*args, context=None):
@@ -160,8 +161,50 @@ def value(
 
 
 def file_layer(
-    filename,
-    refresh_interval_30,
+    filename,  # Can be: "foo" "{oo}" GETTER Key()
+    refresh_interval_s=30,  # Can be: int "{}" GETTER Key()
     retry_interval_s=10,
 ):
     pass
+
+
+def compile_value(x):
+    if isinstance(str, x):
+        expansions = helpers.expansions(x)
+        if not expansions:
+            return smarts.constant(x)
+
+        # noinspection PyShadowingNames
+        def f(context, lower_layer, x=x, expansions=expansions):
+            return helpers.expand(x, expansions, context, lower_layer)
+        return f
+
+    elif isinstance(Key, x):
+        expansions = helpers.expansions(x.key)
+        if not expansions:
+            return smarts.config_value_constant_key(x.key)
+
+        # noinspection PyShadowingNames
+        def f(context, lower_layer, key=x.key, expansions=expansions):
+            target_key = helpers.expand(key, expansions, context, lower_layer)
+            resp = lower_layer.get_item(target_key, context, config.NullConfig)
+            if not resp.found:
+                raise KeyError()
+            return resp.value
+        return f
+
+    elif isinstance(smarts.Getter, x):
+        return smarts.via(x)
+
+    else:
+        return smarts.constant(x)
+
+
+class Key:
+    def __init__(self, key):
+        self.key = key
+
+
+class Exp:
+    def __init__(self, exp):
+        self.exp = exp
