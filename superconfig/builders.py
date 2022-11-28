@@ -12,10 +12,10 @@ def config_stack(*args, context=None):
 
 def aws_parameter_store_layer(
         parameter_store_base_path,
-        refresh_interval_s=60,
-        retry_interval_s=10,
-        ttl_s=30,
-        negative_ttl_s=10,
+        refresh_interval_s=smarts.constant(60),
+        retry_interval_s=smarts.constant(10),
+        ttl_s=smarts.constant(30),
+        negative_ttl_s=smarts.constant(10),
 ):
     return smarts.GetterAsLayer(
         aws_parameter_store_getter(
@@ -30,10 +30,10 @@ def aws_parameter_store_layer(
 
 def aws_parameter_store_getter(
     parameter_store_base_path=None,
-    refresh_interval_s=60,
-    retry_interval_s=10,
-    ttl_s=30,
-    negative_ttl_s=10,
+    refresh_interval_s=smarts.constant(60),
+    retry_interval_s=smarts.constant(10),
+    ttl_s=smarts.constant(30),
+    negative_ttl_s=smarts.constant(10),
 ):
     return smarts.CacheGetter(
         loaders.AutoRefreshGetter(

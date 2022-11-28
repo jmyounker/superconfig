@@ -6,8 +6,9 @@ from typing import Any
 from typing import Tuple
 
 import config
-import converters
+import exceptions
 import helpers
+import smarts
 
 
 class AtomicRef:
@@ -40,8 +41,8 @@ class AutoRefreshGetter:
             self,
             layer_constructor,
             fetcher,
-            refresh_interval_s=60,
-            retry_interval_s=10,
+            refresh_interval_s=smarts.constant(60),
+            retry_interval_s=smarts.constant(10),
             clear_on_removal=True,
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
@@ -71,23 +72,23 @@ class AutoRefreshGetter:
                         if f is not None:
                             self.loaded_layer.set(self.layer_constructor(f))
                     self.last_successful_load = now
-                    self.next_load_s += now + self.refresh_interval_s
-            except DataSourceMissing:
+                    self.next_load_s += now + self.refresh_interval_s(context, lower_layer)
+            except exceptions.DataSourceMissing:
                 if self.clear_on_removal:
                     self.loaded_layer.set(config.NullLayer)
-                self.next_load_s = now + self.retry_interval_s
-            except FetchFailure:
+                self.next_load_s = now + self.retry_interval_s(context, lower_layer)
+            except exceptions.FetchFailure:
                 if self.clear_on_fetch_failure:
                     self.loaded_layer.set(config.NullLayer)
-                self.next_load_s += now + self.retry_interval_s
-            except converters.LoadFailure:
+                self.next_load_s += now + self.retry_interval_s(context, lower_layer)
+            except exceptions.LoadFailure:
                 if self.clear_on_load_failure:
                     self.loaded_layer.set(config.NullLayer)
-                self.next_load_s += now + self.retry_interval_s
+                self.next_load_s += now + self.retry_interval_s(context, lower_layer)
             except Exception:
                 if self.clear_on_fetch_failure:
                     self.loaded_layer.set(config.NullLayer)
-                self.next_load_s += now + self.retry_interval_s
+                self.next_load_s += now + self.retry_interval_s(context, lower_layer)
             finally:
                 self.load_lock.release()
         return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
@@ -95,14 +96,6 @@ class AutoRefreshGetter:
     @staticmethod
     def always_enabled(key, rest, context, lower_layer):
         return True
-
-
-class DataSourceMissing(Exception):
-    pass
-
-
-class FetchFailure(Exception):
-    pass
 
 
 class AbstractFetcher:
@@ -125,13 +118,13 @@ class FileFetcher(AbstractFetcher):
         try:
             return os.stat(filename).st_mtime > self.last_mtime
         except FileNotFoundError:
-            raise DataSourceMissing()
+            raise exceptions.DataSourceMissing()
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
         filename = self.name.expand(context, lower_layer)
         if filename is None:
-            raise FetchFailure()
+            raise exceptions.FetchFailure()
 
         if not self.load_required(filename):
             yield None
@@ -145,9 +138,9 @@ class FileFetcher(AbstractFetcher):
                 yield f.read()
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
-            raise DataSourceMissing()
+            raise exceptions.DataSourceMissing()
         except IOError:
-            raise FetchFailure()
+            raise exceptions.FetchFailure()
 
 
 class FileLayerLoader:
@@ -155,8 +148,8 @@ class FileLayerLoader:
             self,
             layer_constructor,
             filename,
-            refresh_interval_s=10,
-            retry_interval_s=5,
+            refresh_interval_s=smarts.constant(10),
+            retry_interval_s=smarts.constant(5),
             is_enabled=None,
             clear_on_removal=False,
             clear_on_fetch_failure=False,

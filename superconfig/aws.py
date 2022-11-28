@@ -3,6 +3,7 @@ import contextlib
 import boto3
 
 import config
+import exceptions
 import helpers
 import loaders
 
@@ -108,7 +109,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
                     self.name(key, context, lower_layer),
                     self.stage()))
         except Exception as e:
-            raise loaders.FetchFailure()
+            raise exceptions.FetchFailure()
 
     def get_client(self):
         if self._client:
@@ -131,7 +132,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
         try:
             return client.get_secret_value(**kwargs)
         except Exception as e:
-            raise loaders.FetchFailure()
+            raise exceptions.FetchFailure()
 
     @staticmethod
     def value_from_secret(secret):
@@ -140,7 +141,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
         elif 'SecretBinary' in secret:
             return secret['SecretBinary']
         else:
-            raise loaders.FetchFailure("cannot extract value: neither SecretString nor SecretBinary found")
+            raise exceptions.FetchFailure("cannot extract value: neither SecretString nor SecretBinary found")
 
 
 def config_switch(enable_key, default=False):

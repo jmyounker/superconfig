@@ -1,12 +1,12 @@
 import datetime
 import json
-import time
 
 import freezegun
 import pytest
 
 from .helpers import is_expected_getitem
 import superconfig as sc
+import smarts
 
 
 def test_get_constant_leaf():
@@ -217,10 +217,10 @@ def test_graft():
 
 
 def test_cache_caches_records():
-    timeout_s = 5
+    ttl_s = 5
     with freezegun.freeze_time():
         c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(ttl_s=timeout_s),
+            sc.CacheLayer(ttl_s=smarts.constant(ttl_s)),
             sc.SmartLayer({
                 "a": sc.Counter(0),
             })
@@ -233,7 +233,7 @@ def test_cache_flushes_after_timeout():
     timeout_s = 3
     with freezegun.freeze_time():
         c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(ttl_s=timeout_s),
+            sc.CacheLayer(ttl_s=smarts.constant(timeout_s)),
             sc.SmartLayer({
                 "a": sc.Counter(0),
             })
@@ -245,7 +245,7 @@ def test_cache_flushes_after_timeout():
 
 
 def test_cache_records_have_distinct_expirations():
-    timeout_s = 5
+    ttl_s = 5
     test_cases = [
         (0, [("a", 1)]),
         (2, [("a", 1), ("b", 11)]),
@@ -254,7 +254,7 @@ def test_cache_records_have_distinct_expirations():
         (9, [("a", 2), ("b", 12)]),
     ]
     c = sc.layered_config(sc.Context(), [
-        sc.CacheLayer(ttl_s=timeout_s),
+        sc.CacheLayer(ttl_s=smarts.constant(ttl_s)),
         sc.SmartLayer({
             "a": sc.Counter(0),
             "b": sc.Counter(10),

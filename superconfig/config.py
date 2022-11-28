@@ -5,6 +5,8 @@ from typing import AnyStr
 from typing import NamedTuple
 from typing import Optional
 
+import exceptions
+
 
 class Response(NamedTuple):
     is_found: bool
@@ -83,19 +85,6 @@ Response.not_found_next = Response(
 )
 
 
-class ValueTransformException(Exception):
-    """Propagates an error generated while manipulating a retrieve value.
-
-    Propagates an error resulting from an exception while transforming a value
-    from one form to another.
-    """
-    def __init__(self, key, raw_value, exception, *args):
-        super(self.__class__, self).__init__(*args)
-        self.key = key
-        self.raw_value = raw_value
-        self.exception = exception
-
-
 class Context:
     """State which is passed between levels.
 
@@ -130,7 +119,7 @@ class Config:
     def _get_item(self, *args, **kwargs):
         try:
             return self.layer.get_item(*args, **kwargs)
-        except ValueTransformException as e:
+        except exceptions.ValueTransformException as e:
             raise ValueError(
                 "could not parse value %s for key %s: %s",
                 e.raw_value,

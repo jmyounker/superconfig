@@ -8,8 +8,9 @@ from typing import Iterable
 from typing import Optional
 from typing import Tuple
 
-from . import config
-from . import helpers
+import config
+import exceptions
+import helpers
 
 
 class SmartLayer(config.Layer):
@@ -50,6 +51,66 @@ class Getter:
     """
     def read(self, key: AnyStr, rest: AnyStr, context: config.Context, lower_layer: config.Layer):
         raise NotImplementedError()
+
+
+
+def via(getter, key="", rest=None):
+    if rest is None:
+        rest = []
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, key=key, getter=getter):
+        return getter.read(key, rest, context, lower_layer)
+    return f
+
+
+def expansion(c):
+    expansions = helpers.expansions(c)
+    if not expansions:
+        return config_value_constant_key(c)
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, c=c, expansions=expansions):
+        return helpers.expand(c, expansions, context, lower_layer)
+    return f
+
+
+def config_value(key):
+    expansions = helpers.expansions(key)
+    if not expansions:
+        return config_value_constant_key(key)
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, key=key, expansions=expansions):
+        target_key = helpers.expand(key, expansions, context, lower_layer)
+        resp = lower_layer.get_item(target_key, context, config.NullConfig)
+        if not resp.found:
+            raise KeyError()
+        return resp.value
+    return f
+
+
+def config_value_constant_key(key):
+
+    # noinspection PyShadowingNames
+    def f(context, lower_layer, key=key):
+        resp = lower_layer.get_item(key, context, config.NullConfig)
+        if not resp.found:
+            raise KeyError()
+        return resp.value
+    return f
+
+
+def constant(c):
+    return lambda context, lower_layer, c=c: c
+
+
+def expanded(f):
+
+    def _expansion(context, lower_layer):
+        x = f(context, lower_layer)
+        return helpers.expand(x, helpers.expansions(x), context, lower_layer)
+    return _expansion
 
 
 class GetterStack(Getter):
@@ -99,7 +160,7 @@ class Transform(Getter):
         try:
             return resp.new_value(self.f(resp.value))
         except Exception as e:
-            raise config.ValueTransformException(key, resp.value, e)
+            raise exceptions.ValueTransformException(key, resp.value, e)
 
 
 class Constant(Getter):
@@ -139,7 +200,7 @@ class IgnoreTransformErrors(Getter):
     def read(self, key, res, context, lower_layer):
         try:
             return self.getter.read(key, res, context, lower_layer)
-        except config.ValueTransformException:
+        except exceptions.ValueTransformException:
             return config.Response.not_found
 
 
@@ -174,10 +235,10 @@ class Graft(Getter):
 
 
 class CacheLayer:
-    def __init__(self, ttl_s=5, negitive_ttl_s=0):
+    def __init__(self, ttl_s=constant(5), negative_ttl_s=constant(0)):
         self.cache = {}
         self.ttl_s = ttl_s
-        self.negative_ttl_s = negitive_ttl_s
+        self.negative_ttl_s = negative_ttl_s
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> config.Response:
         now = time.time()
@@ -186,10 +247,10 @@ class CacheLayer:
             return cached_resp
         resp = lower_layer.get_item(key, context, config.NullLayer())
         if resp.is_found:
-            return _cache(self.cache, key, resp, now, self.ttl_s)
-        if not self.negative_ttl_s:
+            return _cache(self.cache, key, resp, now, self.ttl_s(context, lower_layer))
+        if not self.negative_ttl_s(context, lower_layer):
             return resp
-        return _cache(self.cache, key, resp, now, self.negative_ttl_s)
+        return _cache(self.cache, key, resp, now, self.negative_ttl_s(context, lower_layer))
 
     def _cache(self, key, resp, now, ttl_s):
         if resp.expire is None:
@@ -202,7 +263,7 @@ class CacheLayer:
 
 
 class CacheGetter:
-    def __init__(self, getter, ttl_s=5, negative_ttl_s=0):
+    def __init__(self, getter, ttl_s=constant(5), negative_ttl_s=constant(0)):
         self.getter = getter
         self.cache = {}
         self.ttl_s = ttl_s
@@ -216,10 +277,10 @@ class CacheGetter:
             return cached_resp
         resp = self.getter.read(key, rest, context, lower_layer)
         if resp.is_found:
-            return _cache(self.cache, cache_key, resp, now, self.ttl_s)
-        if not self.negative_ttl_s:
+            return _cache(self.cache, cache_key, resp, now, self.ttl_s(constant, lower_layer))
+        if not self.negative_ttl_s(context, lower_layer):
             return resp
-        return _cache(self.cache, cache_key, resp, now, self.negative_ttl_s)
+        return _cache(self.cache, cache_key, resp, now, self.negative_ttl_s(constant, lower_layer))
 
 
 def _cache(cache, cache_key, resp, now, ttl_s):
@@ -301,61 +362,3 @@ class FullKeyGetter():
     def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
         return self.getter.read(full_key(key, rest), [], context, lower_layer)
 
-
-def via(getter, key="", rest=None):
-    if rest is None:
-        rest = []
-
-    # noinspection PyShadowingNames
-    def f(context, lower_layer, key=key, getter=getter):
-        return getter.read(key, rest, context, lower_layer)
-    return f
-
-
-def expansion(c):
-    expansions = helpers.expansions(c)
-    if not expansions:
-        return config_value_constant_key(c)
-
-    # noinspection PyShadowingNames
-    def f(context, lower_layer, c=c, expansions=expansions):
-        return helpers.expand(c, expansions, context, lower_layer)
-    return f
-
-
-def config_value(key):
-    expansions = helpers.expansions(key)
-    if not expansions:
-        return config_value_constant_key(key)
-
-    # noinspection PyShadowingNames
-    def f(context, lower_layer, key=key, expansions=expansions):
-        target_key = helpers.expand(key, expansions, context, lower_layer)
-        resp = lower_layer.get_item(target_key, context, config.NullConfig)
-        if not resp.found:
-            raise KeyError()
-        return resp.value
-    return f
-
-
-def config_value_constant_key(key):
-
-    # noinspection PyShadowingNames
-    def f(context, lower_layer, key=key):
-        resp = lower_layer.get_item(key, context, config.NullConfig)
-        if not resp.found:
-            raise KeyError()
-        return resp.value
-    return f
-
-
-def constant(c):
-    return lambda context, lower_layer, c=c: c
-
-
-def expanded(f):
-
-    def _expansion(context, lower_layer):
-        x = f(context, lower_layer)
-        return helpers.expand(x, helpers.expansions(x), context, lower_layer)
-    return _expansion

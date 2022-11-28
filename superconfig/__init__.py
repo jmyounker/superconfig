@@ -19,7 +19,9 @@
 # TODO(jmyounker): Prototype logging system
 # DONE(jmyounker): Test converters
 # DONE(jmyounker): Unify loader operations into single context manager
-# TODO(jmyounker): Consider getting rid of loader classes, and just using context managers.
+# DONE(jmyounker): Consider getting rid of loader classes, and just using context managers.
+#   -- Class still useful for various tricks, notably setting filenames for autodiscover.
+#      Could do with a generic context response, but that seems like over-complication.
 # DONE(jmyounker): Change loaders from io.Bytes to bytes
 # DONE(jmyounker): Test loader expansions
 # DONE(jmyounker): Test loader expansions
@@ -39,20 +41,32 @@
 # DONE(jmyounker): Think about high-level UI
 # TODO(jmyounker): Add sqlalchemy connector
 # TODO(jmyounker): Add sops file layer
-# TODO(jmyounker): Add from_key to extract values anywhere
-# TODO(jmyounker): Add generic parameter expansions for refreshes
-# TODO(jmyounker): Add format based autodetection
+# DONE(jmyounker): Add from_key to extract values anywhere -- value(ctx, lower) interface
+# DONE(jmyounker): Add generic parameter expansions for refreshes
+# DONE(jmyounker): Add format based autodetection - decomposed into discrete tasks
 # DONE(jmyounker): Improve TTL option names
-# TODO(jmyounker): TTL option value expansions
+# DONE(jmyounker): TTL option value expansions
+# TODO(jmyounker): Test TTL option value expansions
 # TODO(jmyounker): Add project root directory builder
 # TODO(jmyounker): Add username builder
-# TODO(jmyounker): Add match language to smart_layer key definitions
-# TODO(jmyounker): Automatch file suffixes in file loaders
+# TODO(jmyounker): Make filename a value() field in the file loader
+# TODO(jmyounker): Define format types, and format-types to constructors table
+# TODO(jmyounker): Define file types to format table
+# TODO(jmyounker): Cache filename in file loader object
+# TODO(jmyounker): Add smart constructor which uses filename in loader to choose correct constructor
 # DONE(jmyounker): Move AWS loaders into aws package
 # TODO(jmyounker): Create file builder
 # DONE(jmyounker): Create AWS parameter store builder
 # DONE(jmyounker): Value builder
 # TODO(jmyounker): Create AWS secrets builder
+# TODO(jmyounker): Clean up value() interface constructors
+# TODO(jmyounker): Make aws property loader prefix a value()
+# TODO(jmyounker): Add auto base64 decodes for AWS loaders
+# TODO(jmyounker): Add envar only transform to builder.value
+# TODO(jmyounker): Add do-not-search to builder.value so it can be used for things that must be envars or defaults
+# TODO(jmyounker): Add required values
+# TODO(jmyounker): Getter level caching
+
 
 from .aws import AwsParameterStoreFetcher
 from .aws import config_switch
@@ -69,7 +83,6 @@ from .config import IndexLayer
 from .config import Response
 from .converters import bytes_from_base64
 from .converters import bytes_from_file
-from .converters import LoadFailure
 from .converters import obj_from_json
 from .converters import obj_from_toml
 from .converters import obj_from_yaml
@@ -77,7 +90,9 @@ from .converters import string_from_bytes
 from .helpers import expansions
 from .helpers import expand
 from .loaders import AutoRefreshGetter
-from .loaders import FetchFailure
+from .exceptions import FetchFailure
+from .exceptions import LoadFailure
+from .exceptions import ValueTransformException
 from .loaders import FileFetcher
 from .loaders import FileLayerLoader
 from .statics import ObjLayer

@@ -5,6 +5,7 @@ import freezegun
 import moto
 import pytest
 
+import smarts
 import superconfig as sc
 
 
@@ -33,8 +34,8 @@ def test_parameterstore_layer_get_caches_before_ttl():
     c = sc.config_stack(
         sc.aws_parameter_store_layer(
             parameter_store_base_path="/base",
-            refresh_interval_s=refresh_interval_s,
-            ttl_s=ttl_s,
+            refresh_interval_s=smarts.constant(refresh_interval_s),
+            ttl_s=smarts.constant(ttl_s),
         ),
     )
     now = datetime.datetime.utcnow()
@@ -70,8 +71,8 @@ def test_parameterstore_layer_refreshes_after_ttl():
     c = sc.config_stack(
         sc.aws_parameter_store_layer(
             parameter_store_base_path="/base",
-            refresh_interval_s=refresh_interval_s,
-            ttl_s=ttl_s,
+            refresh_interval_s=smarts.constant(refresh_interval_s),
+            ttl_s=smarts.constant(ttl_s),
         ),
     )
     now = datetime.datetime.utcnow()
