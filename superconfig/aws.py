@@ -108,7 +108,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
                     self.get_client(),
                     self.name(key, context, lower_layer),
                     self.stage()))
-        except Exception as e:
+        except Exception:
             raise exceptions.FetchFailure()
 
     def get_client(self):
@@ -131,7 +131,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
             kwargs['VersionStage'] = stage
         try:
             return client.get_secret_value(**kwargs)
-        except Exception as e:
+        except Exception:
             raise exceptions.FetchFailure()
 
     @staticmethod
