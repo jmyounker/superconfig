@@ -50,7 +50,8 @@
 # TODO(jmyounker): Add project root directory builder
 # TODO(jmyounker): Add username builder
 # TODO(jmyounker): Make filename a value() field in the file loader
-# TODO(jmyounker): Define format types, and format-types to constructors table
+# DONE(jmyounker): Define format types
+# TODO(jmyounker): Define format-types to constructors table
 # TODO(jmyounker): Define file types to format table
 # TODO(jmyounker): Cache filename in file loader object
 # TODO(jmyounker): Add smart constructor which uses filename in loader to choose correct constructor

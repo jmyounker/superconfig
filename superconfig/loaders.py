@@ -5,6 +5,8 @@ import threading
 from typing import Any
 from typing import Tuple
 
+import aenum
+
 import config
 import exceptions
 import helpers
@@ -169,4 +171,20 @@ class FileLayerLoader:
 
     def get_item(self, key, context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
         return self.auto_loader.read("", key.split("."), context, lower_layer)
+
+
+@aenum.unique
+class Format(aenum.Enum):
+    pass
+
+
+def register_format(x):
+    aenum.extend_enum(Format, x, x.lower())
+
+
+register_format("Ini")
+register_format("Json")
+register_format("Properties")
+register_format("Toml")
+register_format("Yaml")
 
