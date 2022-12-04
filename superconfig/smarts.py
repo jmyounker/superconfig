@@ -345,7 +345,6 @@ class BaseKeyGetter():
         return self.getter.read(key, [], context, lower_layer)
 
 
-
 class ExpandedKeyGetter():
     def __init__(self, getter):
         self.getter = getter
