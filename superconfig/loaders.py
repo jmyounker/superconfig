@@ -2,7 +2,7 @@ import contextlib
 import os
 import time
 import threading
-from typing import Any
+from typing import Any, AnyStr, List
 from typing import Tuple
 
 import aenum
@@ -108,8 +108,9 @@ class AbstractFetcher:
 
 
 class FileFetcher(AbstractFetcher):
-    def __init__(self, filename_tmpl):
-        self.name = helpers.ExpandableString(filename_tmpl)
+    def __init__(self, filename_value):
+        self.name = filename_value
+        self.filename = None
         self.last_mtime = 0
 
     def load_required(self, filename):
@@ -124,9 +125,12 @@ class FileFetcher(AbstractFetcher):
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
-        filename = self.name.expand(context, lower_layer)
+        filename = self.name(context, lower_layer)
         if filename is None:
             raise exceptions.FetchFailure()
+
+        # Not sure if this belongs here or after load_required() call.
+        self.filename = filename
 
         if not self.load_required(filename):
             yield None
@@ -157,10 +161,11 @@ class FileLayerLoader:
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
     ):
-        self.layer_constructor = layer_constructor
+        self.file_fetcher = FileFetcher(filename)
+        self.layer_constructor = dynamic_layer_constructor(self.file_fetcher)
         self.auto_loader = AutoRefreshGetter(
-            layer_constructor=layer_constructor,
-            fetcher=FileFetcher(filename),
+            layer_constructor=self.layer_constructor,
+            fetcher=self.file_fetcher,
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
             is_enabled=is_enabled,
@@ -171,6 +176,21 @@ class FileLayerLoader:
 
     def get_item(self, key, context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
         return self.auto_loader.read("", key.split("."), context, lower_layer)
+
+
+def dynamic_layer_constructor(obj_with_filename):
+
+    def _wrapped(obj_with_filename=obj_with_filename):
+        return layer_constructor_for_filename(obj_with_filename.filename)
+
+    return _wrapped
+
+
+def layer_constructor_for_filename(filename):
+    _, suffix = os.path.splitext(filename)
+    if suffix not in format_by_suffix:
+        raise KeyError("suffix %r not known" % suffix)
+    return layer_constructor_by_format[format_by_suffix[suffix]]
 
 
 @aenum.unique
@@ -188,3 +208,17 @@ register_format("Properties")
 register_format("Toml")
 register_format("Yaml")
 
+
+layer_constructor_by_format = {}
+
+
+def register_layer_constructor(format: Format, layer_constructor) -> None:
+    layer_constructor_by_format[format] = layer_constructor
+
+
+format_by_suffix = {}
+
+
+def register_file_formats(format: Format, suffixes: List[AnyStr]) -> None:
+    for suffix in suffixes:
+        format_by_suffix[suffix] = format
