@@ -180,6 +180,7 @@ class FileLayerLoader:
 
 def dynamic_layer_constructor(obj_with_filename):
 
+    # noinspection PyShadowingNames
     def _wrapped(obj_with_filename=obj_with_filename):
         return layer_constructor_for_filename(obj_with_filename.filename)
 
