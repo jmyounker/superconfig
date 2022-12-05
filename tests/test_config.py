@@ -3,7 +3,9 @@ import pytest
 from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
-from superconfig import Config, LoadFailure, PropertiesLayer
+from superconfig.exceptions import LoadFailure
+from superconfig import PropertiesLayer
+from superconfig import Config
 from superconfig import ObjLayer
 from superconfig import InnerObjLayer
 from superconfig import IniLayer

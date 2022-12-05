@@ -8,8 +8,8 @@ from typing import Any
 
 import jproperties
 
-from superconfig import LoadFailure
-from . import config
+from superconfig.exceptions import LoadFailure
+from superconfig import config
 
 
 class ObjLayer(config.Layer):

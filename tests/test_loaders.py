@@ -5,12 +5,12 @@ import freezegun
 import pytest
 
 import aws
-import smarts
 import superconfig as sc
+import vars
 
 
 def test_file_layer_loader_file_missing(tmp_path):
-    c = sc.layered_config([sc.FileLayerLoader(sc.ObjLayer.from_bytes, str(tmp_path / "foo.json"))])
+    c = sc.layered_config([sc.FileLayerLoader(sc.ObjLayer.from_bytes, vars.compile(str(tmp_path / "foo.json")))])
     with pytest.raises(KeyError):
         _ = c["a"]
 
@@ -18,7 +18,8 @@ def test_file_layer_loader_file_missing(tmp_path):
 def test_file_layer_loader_loads_files(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
-    c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(sc.ObjLayer.from_bytes, str(f))])
+    c = sc.layered_config(sc.Context(), [sc.FileLayerLoader(
+        layer_constructor=sc.ObjLayer.from_bytes, filename=vars.compile(str(f)))])
     assert c["a"] == 1
 
 
@@ -29,9 +30,9 @@ def test_file_layer_loader_does_not_reload_during_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -53,9 +54,9 @@ def test_file_layer_loader_does_not_load_unchanged_files(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            load_checking_loader,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=load_checking_loader,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -73,9 +74,9 @@ def test_file_layer_loader_loads_changed_files_after_cache_period(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -91,9 +92,9 @@ def test_file_layer_loader_w_clear_clears_config_after_file_removed(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
             clear_on_removal=True,
         )])
     with freezegun.freeze_time(now):
@@ -111,9 +112,9 @@ def test_file_layer_loader_wo_clear_keeps_config_after_file_removal(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
         )])
     with freezegun.freeze_time(now):
         assert c["a"] == 1
@@ -128,9 +129,9 @@ def test_autoload_enabled_when_true(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile((check_period_s)),
             is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
         sc.SmartLayer({
@@ -146,9 +147,9 @@ def test_autoload_disabled_when_false(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
             is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
         sc.SmartLayer({
@@ -164,10 +165,10 @@ def test_autoload_disabled_when_missing(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
-        sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(f),
-            refresh_interval_s=smarts.constant(check_period_s),
+        sc.file_layer(
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(f)),
+            refresh_interval_s=vars.compile(check_period_s),
             is_enabled=aws.config_switch("sc.file_layer.is_enabled"),
         ),
     ])
@@ -181,9 +182,9 @@ def test_autoload_filename_expansion_works(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(tmp_path / "foo-{env}.json"),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(tmp_path / "foo-{env}.json")),
+            refresh_interval_s=vars.compile(check_period_s),
         ),
         sc.SmartLayer({
             "env": sc.Constant("prod"),
@@ -198,12 +199,11 @@ def test_autoload_filename_expansion_fails(tmp_path):
     f.write_text(json.dumps({"a": 1}))
     c = sc.layered_config(sc.Context(), [
         sc.FileLayerLoader(
-            sc.ObjLayer.from_bytes,
-            str(tmp_path / "foo-{env}.json"),
-            refresh_interval_s=smarts.constant(check_period_s),
+            layer_constructor=sc.ObjLayer.from_bytes,
+            filename=vars.compile(str(tmp_path / "foo-{env}.json")),
+            refresh_interval_s=vars.compile(check_period_s),
         ),
     ])
     with pytest.raises(KeyError):
         _ = c["a"]
-
 

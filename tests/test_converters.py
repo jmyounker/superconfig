@@ -1,6 +1,7 @@
 import pytest
 
 import superconfig as sc
+
 from tests.helpers import is_expected_getitem
 
 
@@ -14,7 +15,7 @@ def test_load_obj_from_json_string_with_error():
     config = ":-b\nc:\n"
     with pytest.raises(sc.LoadFailure):
         sc.obj_from_json(config)
-
+        assert False
 
 def test_load_config_from_yaml_string():
     config = """# A YAML test file

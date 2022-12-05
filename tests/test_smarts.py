@@ -7,6 +7,7 @@ import pytest
 from .helpers import is_expected_getitem
 import superconfig as sc
 import smarts
+import superconfig.vars as vars
 
 
 def test_get_constant_leaf():
@@ -295,7 +296,7 @@ def test_getter_to_layer_adapter(tmp_path):
             sc.GetterAsLayer(
                 sc.AutoRefreshGetter(
                     layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(x))),
-                    fetcher=sc.FileFetcher(str(f)),
+                    fetcher=sc.FileFetcher(vars.compile(str(f))),
                 ),
             ),
         ]
@@ -313,7 +314,7 @@ def test_smart_layer_root_getter(tmp_path):
             sc.SmartLayer({
                 "": sc.AutoRefreshGetter(
                     layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(x))),
-                    fetcher=sc.FileFetcher(str(f)),
+                    fetcher=sc.FileFetcher(vars.compile(str(f))),
                 ),
             }),
         ]

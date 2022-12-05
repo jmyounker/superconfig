@@ -49,14 +49,14 @@
 # TODO(jmyounker): Test TTL option value expansions
 # TODO(jmyounker): Add project root directory builder
 # TODO(jmyounker): Add username builder
-# TODO(jmyounker): Make filename a value() field in the file loader
+# DONE(jmyounker): Make filename a value() field in the file loader
 # DONE(jmyounker): Define format types
-# TODO(jmyounker): Define format-types to constructors table
-# TODO(jmyounker): Define file types to format table
-# TODO(jmyounker): Cache filename in file loader object
-# TODO(jmyounker): Add smart constructor which uses filename in loader to choose correct constructor
+# DONE(jmyounker): Define format-types to constructors table
+# DONE(jmyounker): Define file types to format table
+# DONE(jmyounker): Cache filename in file loader object
+# DONE(jmyounker): Add smart constructor which uses filename in loader to choose correct constructor
 # DONE(jmyounker): Move AWS loaders into aws package
-# TODO(jmyounker): Create file builder
+# DONE(jmyounker): Create file builder
 # DONE(jmyounker): Create AWS parameter store builder
 # DONE(jmyounker): Value builder
 # TODO(jmyounker): Create AWS secrets builder
@@ -64,9 +64,12 @@
 # TODO(jmyounker): Make aws property loader prefix a value()
 # TODO(jmyounker): Add auto base64 decodes for AWS loaders
 # TODO(jmyounker): Add envar only transform to builder.value
-# TODO(jmyounker): Add do-not-search to builder.value so it can be used for things that must be envars or defaults
+# TODO(jmyounker): Add do-not-fetch-value-from-config to builder.value so it can be used for things that must be envars or defaults
 # TODO(jmyounker): Add required values
-# TODO(jmyounker): Getter level caching
+# TODO(jmyounker): Per-getter caching
+# TODO(jmyounker): Allow parameterization of layer_constructor map
+# TODO(jmyounker): Replace is_enabled with variable mechanism
+# TODO(jmyounker): Improve names for vars and vars.compile
 
 
 from .aws import AwsParameterStoreFetcher
@@ -75,6 +78,8 @@ from .aws import SecretsManagerFetcher
 from .builders import aws_parameter_store_getter
 from .builders import aws_parameter_store_layer
 from .builders import config_stack
+from .builders import file_layer
+from .builders import FileLayerLoader
 from .builders import value
 from .config import Config
 from .config import Context
@@ -94,8 +99,8 @@ from .loaders import AutoRefreshGetter
 from .exceptions import FetchFailure
 from .exceptions import LoadFailure
 from .exceptions import ValueTransformException
+from .formats import Format
 from .loaders import FileFetcher
-from .loaders import FileLayerLoader
 from .statics import ObjLayer
 from .statics import InnerObjLayer
 from .statics import IniLayer

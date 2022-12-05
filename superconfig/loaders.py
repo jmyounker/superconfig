@@ -2,14 +2,9 @@ import contextlib
 import os
 import time
 import threading
-from typing import Any, AnyStr, List
-from typing import Tuple
-
-import aenum
 
 import config
 import exceptions
-import helpers
 import smarts
 
 
@@ -70,9 +65,9 @@ class AutoRefreshGetter:
         if self.load_lock.acquire(blocking=False):
             try:
                 if self.is_enabled(key, rest, context, lower_layer):
-                    with self.fetcher.load(now, key, rest, context, lower_layer) as f:
-                        if f is not None:
-                            self.loaded_layer.set(self.layer_constructor(f))
+                    with self.fetcher.load(now, key, rest, context, lower_layer) as bin_data:
+                        if bin_data is not None:
+                            self.loaded_layer.set(self.layer_constructor(bin_data))
                     self.last_successful_load = now
                     self.next_load_s += now + self.refresh_interval_s(context, lower_layer)
             except exceptions.DataSourceMissing:
@@ -147,79 +142,7 @@ class FileFetcher(AbstractFetcher):
             raise exceptions.DataSourceMissing()
         except IOError:
             raise exceptions.FetchFailure()
+        except Exception as e:
+            print(e)
+            raise e
 
-
-class FileLayerLoader:
-    def __init__(
-            self,
-            layer_constructor,
-            filename,
-            refresh_interval_s=smarts.constant(10),
-            retry_interval_s=smarts.constant(5),
-            is_enabled=None,
-            clear_on_removal=False,
-            clear_on_fetch_failure=False,
-            clear_on_load_failure=False,
-    ):
-        self.file_fetcher = FileFetcher(filename)
-        self.layer_constructor = dynamic_layer_constructor(self.file_fetcher)
-        self.auto_loader = AutoRefreshGetter(
-            layer_constructor=self.layer_constructor,
-            fetcher=self.file_fetcher,
-            refresh_interval_s=refresh_interval_s,
-            retry_interval_s=retry_interval_s,
-            is_enabled=is_enabled,
-            clear_on_removal=clear_on_removal,
-            clear_on_fetch_failure=clear_on_fetch_failure,
-            clear_on_load_failure=clear_on_load_failure,
-        )
-
-    def get_item(self, key, context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
-        return self.auto_loader.read("", key.split("."), context, lower_layer)
-
-
-def dynamic_layer_constructor(obj_with_filename):
-
-    # noinspection PyShadowingNames
-    def _wrapped(obj_with_filename=obj_with_filename):
-        return layer_constructor_for_filename(obj_with_filename.filename)
-
-    return _wrapped
-
-
-def layer_constructor_for_filename(filename):
-    _, suffix = os.path.splitext(filename)
-    if suffix not in format_by_suffix:
-        raise KeyError("suffix %r not known" % suffix)
-    return layer_constructor_by_format[format_by_suffix[suffix]]
-
-
-@aenum.unique
-class Format(aenum.Enum):
-    pass
-
-
-def register_format(x):
-    aenum.extend_enum(Format, x, x.lower())
-
-
-register_format("Ini")
-register_format("Json")
-register_format("Properties")
-register_format("Toml")
-register_format("Yaml")
-
-
-layer_constructor_by_format = {}
-
-
-def register_layer_constructor(format: Format, layer_constructor) -> None:
-    layer_constructor_by_format[format] = layer_constructor
-
-
-format_by_suffix = {}
-
-
-def register_file_formats(format: Format, suffixes: List[AnyStr]) -> None:
-    for suffix in suffixes:
-        format_by_suffix[suffix] = format

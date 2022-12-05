@@ -219,3 +219,25 @@ def test_default_passes_through_transform():
         sc.SmartLayer({"a.b": sc.value(default="1", transform=int)}),
     )
     assert c["a.b"] == 1
+
+
+def test_autoload_format_by_extension(tmp_path):
+    test_cases = [
+        ('{"a": {"b": 1}}\n', "foo.json", "a.b", 1),
+        ('a:\n  b: 1\n', "foo.yaml", "a.b", 1),
+        ('a:\n  b: 1\n', "foo.yml", "a.b", 1),
+        ('[a]\nb = 1\n', "foo.ini", "a.b", "1"),
+        ('[a]\nb = 1\n', "foo.toml", "a.b", 1),
+        ('a.b = 1\n', "foo.prop", "a.b", "1"),
+        ('a.b = 1\n', "foo.props", "a.b", "1"),
+        ('a.b = 1\n', "foo.properties", "a.b", "1"),
+    ]
+    for contents, filename, key, expected_value in test_cases:
+        f = tmp_path / filename
+        f.write_text(contents)
+        c = sc.config_stack(
+            sc.file_layer(filename=f)
+        )
+        assert c[key] == expected_value
+
+

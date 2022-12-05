@@ -1,9 +1,9 @@
-import superconfig.loaders as loaders
+from superconfig import formats
 
 
 def test_expected_types_defined():
-    _ = loaders.Format.Ini
-    _ = loaders.Format.Json
-    _ = loaders.Format.Properties
-    _ = loaders.Format.Toml
-    _ = loaders.Format.Yaml
+    _ = formats.Format.Ini
+    _ = formats.Format.Json
+    _ = formats.Format.Properties
+    _ = formats.Format.Toml
+    _ = formats.Format.Yaml

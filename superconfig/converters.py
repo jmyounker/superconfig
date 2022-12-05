@@ -25,7 +25,8 @@ from typing import AnyStr
 
 import toml
 
-from . import exceptions
+from superconfig import exceptions
+
 
 try:
     from yaml import CDumper as Dumper

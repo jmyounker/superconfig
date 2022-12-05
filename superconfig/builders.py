@@ -1,9 +1,14 @@
 """The high level interface for building config trees."""
+from typing import Tuple, Any
+
 import aws
-from . import config
-from . import helpers
-from . import loaders
-from . import smarts
+import converters
+import formats
+import statics
+import config
+import loaders
+import smarts
+import vars
 
 
 def config_stack(*args, context=None):
@@ -162,49 +167,55 @@ def value(
 
 def file_layer(
     filename,  # Can be: "foo" "{oo}" GETTER Key()
+    layer_constructor=None,
+    is_enabled=None,
     refresh_interval_s=30,  # Can be: int "{}" GETTER Key()
     retry_interval_s=10,
 ):
-    pass
+    return FileLayerLoader(
+        filename=vars.compile(filename),
+        layer_constructor=layer_constructor,
+        is_enabled=is_enabled,
+        refresh_interval_s=vars.compile(refresh_interval_s),
+        retry_interval_s=vars.compile(retry_interval_s),
+    )
 
 
-def compile_value(x):
-    if isinstance(str, x):
-        expansions = helpers.expansions(x)
-        if not expansions:
-            return smarts.constant(x)
+class FileLayerLoader:
+    def __init__(
+            self,
+            filename,
+            layer_constructor,
+            refresh_interval_s=smarts.constant(10),
+            retry_interval_s=smarts.constant(5),
+            is_enabled=None,
+            clear_on_removal=False,
+            clear_on_fetch_failure=False,
+            clear_on_load_failure=False,
+    ):
+        self.file_fetcher = loaders.FileFetcher(filename)
+        self.layer_constructor = layer_constructor or dynamic_layer_constructor(self.file_fetcher)
+        self.auto_loader = loaders.AutoRefreshGetter(
+            layer_constructor=self.layer_constructor,
+            fetcher=self.file_fetcher,
+            refresh_interval_s=refresh_interval_s,
+            retry_interval_s=retry_interval_s,
+            is_enabled=is_enabled,
+            clear_on_removal=clear_on_removal,
+            clear_on_fetch_failure=clear_on_fetch_failure,
+            clear_on_load_failure=clear_on_load_failure,
+        )
 
-        # noinspection PyShadowingNames
-        def f(context, lower_layer, x=x, expansions=expansions):
-            return helpers.expand(x, expansions, context, lower_layer)
-        return f
-
-    elif isinstance(Key, x):
-        expansions = helpers.expansions(x.key)
-        if not expansions:
-            return smarts.config_value_constant_key(x.key)
-
-        # noinspection PyShadowingNames
-        def f(context, lower_layer, key=x.key, expansions=expansions):
-            target_key = helpers.expand(key, expansions, context, lower_layer)
-            resp = lower_layer.get_item(target_key, context, config.NullConfig)
-            if not resp.found:
-                raise KeyError()
-            return resp.value
-        return f
-
-    elif isinstance(smarts.Getter, x):
-        return smarts.via(x)
-
-    else:
-        return smarts.constant(x)
+    def get_item(self, key, context, lower_layer: config.Layer) -> Tuple[int, int, Any | None]:
+        return self.auto_loader.read("", key.split("."), context, lower_layer)
 
 
-class Key:
-    def __init__(self, key):
-        self.key = key
+def dynamic_layer_constructor(obj_with_filename):
 
+    # noinspection PyShadowingNames
+    def _wrapped(data, obj_with_filename=obj_with_filename):
+        layer_constructor = formats.layer_constructor_for_filename(obj_with_filename.filename)
+        return layer_constructor(data)
 
-class Exp:
-    def __init__(self, exp):
-        self.exp = exp
+    return _wrapped
+
