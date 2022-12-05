@@ -4,7 +4,7 @@ For example: You want to convert a base64 encoded
 file into a DictLayer(). To do this you'd build this
 constructor:
 
-    c = lambda f: DictLayer(
+    c = lambda f: ObjLayer(
         obj_from_json(
             string_from_bytes(
                 bytes_from_base64(f),
