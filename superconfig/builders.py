@@ -33,6 +33,7 @@ def aws_parameter_store_layer(
 
 def aws_parameter_store_getter(
     parameter_store_base_path=None,
+    binary_decoder=None,
     refresh_interval_s=smarts.constant(60),
     retry_interval_s=smarts.constant(10),
     ttl_s=smarts.constant(30),
@@ -41,7 +42,10 @@ def aws_parameter_store_getter(
     return smarts.CacheGetter(
         loaders.AutoRefreshGetter(
             layer_constructor=smarts.IndexGetterLayer,
-            fetcher=aws.AwsParameterStoreFetcher(root=parameter_store_base_path),
+            fetcher=aws.AwsParameterStoreFetcher(
+                root=parameter_store_base_path,
+                binary_decoder=binary_decoder
+            ),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
         ),

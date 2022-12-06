@@ -3,6 +3,7 @@ import contextlib
 import boto3
 
 import config
+import converters
 import exceptions
 import helpers
 import loaders
@@ -30,9 +31,10 @@ class AwsParameterStoreFetcher(loaders.AbstractFetcher):
     directly to the cache layer.
 
     """
-    def __init__(self, root=None, client=None):
+    def __init__(self, root=None, client=None, binary_decoder=None):
         self._client = client
         self._root = None if root is None else helpers.ExpandableString(root)
+        self._binary_decoder = binary_decoder or (lambda x: x)
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
@@ -51,7 +53,7 @@ class AwsParameterStoreFetcher(loaders.AbstractFetcher):
     def parameter_tree(self, client, path):
         tree = {}
         for k, p in self.describe_parameters_with_keys(client, path):
-            tree[k] = ParameterNode(client, p)
+            tree[k] = ParameterNode(client, p, self._binary_decoder)
         return tree
 
     def describe_parameters_with_keys(self, client, path):
@@ -73,14 +75,15 @@ class AwsParameterStoreFetcher(loaders.AbstractFetcher):
 
 
 class ParameterNode:
-    def __init__(self, client, parameter):
+    def __init__(self, client, parameter, binary_decoder):
         self.client = client
         self.parameter = parameter
+        self.binary_decoder = binary_decoder
 
     def read(self, key, rest, context, lower_layer):
         # noinspection PyBroadException
         try:
-            resp = self.client.get_parameter(Name=self.parameter["Name"])
+            resp = self.client.get_parameter(Name=self.parameter["Name"], WithDecryption=True)
             p = resp["Parameter"]
         except Exception:
             return config.Response.not_found_next
@@ -89,16 +92,18 @@ class ParameterNode:
         elif p["Type"] == "StringList":
             return config.Response.found_next(p["Value"].split(","))
         elif p["Type"] == "SecureString":
-            return config.Response.found_next(p["Value"])
+            print(p["Value"])
+            return config.Response.found_next(self.binary_decoder(p["Value"]))
         else:
             return config.Response.not_found_next
 
 
 class SecretsManagerFetcher(loaders.AbstractFetcher):
-    def __init__(self, name=None, client=None, stage=None):
+    def __init__(self, name=None, client=None, stage=None, binary_decoder=None):
         self._client = client
         self._name = None if name is None else helpers.ExpandableString(name)
         self._stage = stage
+        self._binary_decoder = binary_decoder or (lambda x: x)
 
     @contextlib.contextmanager
     def load(self, now, key, rest, context, lower_layer):
@@ -134,12 +139,11 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
         except Exception:
             raise exceptions.FetchFailure()
 
-    @staticmethod
-    def value_from_secret(secret):
+    def value_from_secret(self, secret):
         if 'SecretString' in secret:
             return bytes(secret['SecretString'].encode('utf8'))
         elif 'SecretBinary' in secret:
-            return secret['SecretBinary']
+            return self._binary_decoder(secret['SecretBinary'])
         else:
             raise exceptions.FetchFailure("cannot extract value: neither SecretString nor SecretBinary found")
 

@@ -1,8 +1,11 @@
+import base64
+
 import boto3
 import moto
 import pytest
 
 import aws
+import converters
 import superconfig as sc
 
 
@@ -45,6 +48,33 @@ def test_secmgr_load_single_value_binary():
                     "a.b": sc.AutoRefreshGetter(
                         layer_constructor=lambda f: sc.ConstantLayer(f),
                         fetcher=aws.SecretsManagerFetcher(),
+                    )
+                }
+            ),
+        ]
+    )
+    assert c["a.b"] == "foo".encode('utf8')
+
+
+@moto.mock_secretsmanager
+def test_secmgr_load_single_value_binary_base64_encoded():
+    sm = boto3.client("secretsmanager")
+
+    sm.create_secret(
+        Name='a.b',
+        SecretBinary=base64.b64encode(b'foo'),
+    )
+    c = sc.layered_config(
+        sc.Context(),
+        [
+            sc.SmartLayer(
+                {
+                    "a.b": sc.AutoRefreshGetter(
+                        layer_constructor=lambda f: sc.ConstantLayer(f),
+                        fetcher=aws.SecretsManagerFetcher(
+                            binary_decoder=lambda x: converters.bytes_from_base64(converters.string_from_bytes(x)),
+                        ),
+
                     )
                 }
             ),
@@ -178,14 +208,17 @@ def test_parameter_store_value_handling():
     ps.put_parameter(
         Name='/a/b/c/e',
         Type='SecureString',
-        Value='3',
+        Value=base64.b64encode(b'3').decode('utf8'),
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter("/a")}))
+    c = sc.Config(sc.Context(), sc.SmartLayer({
+        "a": sc.aws_parameter_store_getter(
+            "/a",
+            binary_decoder=converters.bytes_from_base64)}))
     assert c["a.b.c"] == "1"
     assert c["a.b.c.d"] == ["2a", "2b"]
     # There are significant differences between what moto returns and what real AWS, so
     # this is as good as I can get for the moment.
-    assert c["a.b.c.e"] is not None
+    assert c["a.b.c.e"] == b"3"
 
 
 @moto.mock_ssm
