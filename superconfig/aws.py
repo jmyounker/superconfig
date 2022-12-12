@@ -101,7 +101,7 @@ class ParameterNode:
 class SecretsManagerFetcher(loaders.AbstractFetcher):
     def __init__(self, name=None, client=None, stage=None, binary_decoder=None):
         self._client = client
-        self._name = None if name is None else helpers.ExpandableString(name)
+        self._name = name
         self._stage = stage
         self._binary_decoder = binary_decoder or (lambda x: x)
 
@@ -124,7 +124,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
     def name(self, key, context, lower_layer):
         if self._name is None:
             return key
-        return self._name.expand(context, lower_layer)
+        return self._name(context, lower_layer)
 
     def stage(self):
         return self._stage

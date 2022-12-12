@@ -7,6 +7,7 @@ import pytest
 import aws
 import converters
 import superconfig as sc
+import vars
 
 
 @moto.mock_secretsmanager
@@ -99,7 +100,7 @@ def test_secmgr_load_from_static_name():
                         layer_constructor=lambda f: sc.ConstantLayer(
                             sc.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
-                            name="c.d"
+                            name=vars.compile("c.d")
                         ),
                     )
                 }
@@ -125,7 +126,7 @@ def test_secmgr_load_from_name_template():
                         layer_constructor=lambda f: sc.ConstantLayer(
                             sc.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
-                            name="c-{env}"
+                            name=vars.compile("c-{env}")
                         ),
                     )
                 }
