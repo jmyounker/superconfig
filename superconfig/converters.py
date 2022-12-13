@@ -25,7 +25,7 @@ from typing import AnyStr
 
 import toml
 
-from superconfig import exceptions
+from superconfig.exceptions import LoadFailure
 
 
 try:
@@ -41,28 +41,28 @@ def obj_from_json(x: AnyStr) -> Any:
     try:
         return json.loads(x)
     except Exception:
-        raise exceptions.LoadFailure()
+        raise LoadFailure()
 
 
 def obj_from_toml(x: AnyStr) -> Any:
     try:
         return toml.loads(x)
     except Exception:
-        raise exceptions.LoadFailure()
+        raise LoadFailure()
 
 
 def obj_from_yaml(x: AnyStr) -> Any:
     try:
         return yaml.load(x, Loader=Loader)
     except Exception as e:
-        raise exceptions.LoadFailure(e)
+        raise LoadFailure(e)
 
 
 def string_from_bytes(x: bytes, encoding='utf8') -> AnyStr:
     try:
         return x.decode(encoding)
     except Exception:
-        raise exceptions.LoadFailure()
+        raise LoadFailure()
 
 
 def bytes_from_file(x: io.BytesIO) -> bytes:

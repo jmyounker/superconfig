@@ -4,10 +4,14 @@ import boto3
 import moto
 import pytest
 
-import aws
-import converters
-import superconfig as sc
-import vars
+from superconfig import aws
+from superconfig import builders
+from superconfig import config
+from superconfig import converters
+from superconfig import loaders
+from superconfig import smarts
+from superconfig import statics
+from superconfig import vars
 
 
 @moto.mock_secretsmanager
@@ -17,14 +21,14 @@ def test_secmgr_load_single_value_string():
         Name='a.b',
         SecretString='foo',
     )
-    c = sc.layered_config(
-            sc.Context(),
+    c = config.layered_config(
+            config.Context(),
             [
-                sc.SmartLayer(
+                smarts.SmartLayer(
                     {
-                        "a.b": sc.AutoRefreshGetter(
-                            layer_constructor=lambda f: sc.ConstantLayer(
-                                sc.string_from_bytes(f, encoding='utf8')),
+                        "a.b": loaders.AutoRefreshGetter(
+                            layer_constructor=lambda f: config.ConstantLayer(
+                                converters.string_from_bytes(f, encoding='utf8')),
                             fetcher=aws.SecretsManagerFetcher(),
                         )
                     }
@@ -41,13 +45,13 @@ def test_secmgr_load_single_value_binary():
         Name='a.b',
         SecretBinary='foo'.encode('utf8'),
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer(
+            smarts.SmartLayer(
                 {
-                    "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(f),
+                    "a.b": loaders.AutoRefreshGetter(
+                        layer_constructor=lambda f: config.ConstantLayer(f),
                         fetcher=aws.SecretsManagerFetcher(),
                     )
                 }
@@ -65,13 +69,13 @@ def test_secmgr_load_single_value_binary_base64_encoded():
         Name='a.b',
         SecretBinary=base64.b64encode(b'foo'),
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer(
+            smarts.SmartLayer(
                 {
-                    "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(f),
+                    "a.b": loaders.AutoRefreshGetter(
+                        layer_constructor=lambda f: config.ConstantLayer(f),
                         fetcher=aws.SecretsManagerFetcher(
                             binary_decoder=lambda x: converters.bytes_from_base64(converters.string_from_bytes(x)),
                         ),
@@ -91,14 +95,14 @@ def test_secmgr_load_from_static_name():
         Name='c.d',
         SecretString='foo',
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer(
+            smarts.SmartLayer(
                 {
-                    "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(f)),
+                    "a.b": loaders.AutoRefreshGetter(
+                        layer_constructor=lambda f: config.ConstantLayer(
+                            converters.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
                             name=vars.compile("c.d")
                         ),
@@ -117,22 +121,22 @@ def test_secmgr_load_from_name_template():
         Name='c-prod',
         SecretString='foo',
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer(
+            smarts.SmartLayer(
                 {
-                    "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(f)),
+                    "a.b": loaders.AutoRefreshGetter(
+                        layer_constructor=lambda f: config.ConstantLayer(
+                            converters.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
                             name=vars.compile("c-{env}")
                         ),
                     )
                 }
             ),
-            sc.SmartLayer({
-                "env": sc.Constant("prod"),
+            smarts.SmartLayer({
+                "env": smarts.Constant("prod"),
             }),
         ]
     )
@@ -146,22 +150,22 @@ def test_secmgr_load_from_name_template_fails():
         Name='c-you-wont-find-this',
         SecretString='foo',
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer(
+            smarts.SmartLayer(
                 {
-                    "a.b": sc.AutoRefreshGetter(
-                        layer_constructor=lambda f: sc.ConstantLayer(
-                            sc.string_from_bytes(f)),
+                    "a.b": loaders.AutoRefreshGetter(
+                        layer_constructor=lambda f: config.ConstantLayer(
+                            converters.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
                             name="c-{env}"
                         ),
                     )
                 }
             ),
-            sc.SmartLayer({
-                "env": sc.Constant("prod"),
+            smarts.SmartLayer({
+                "env": smarts.Constant("prod"),
             }),
         ]
     )
@@ -177,7 +181,7 @@ def test_parameterstore_implicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter()}))
+    c = config.Config(config.Context(), smarts.SmartLayer({"a": builders.aws_parameter_store_getter()}))
     assert c["a.b"] == "foo"
 
 
@@ -189,7 +193,7 @@ def test_parameterstore_explicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({"a": sc.aws_parameter_store_getter("/c")}))
+    c = config.Config(config.Context(), smarts.SmartLayer({"a": builders.aws_parameter_store_getter("/c")}))
     assert c["a.b"] == "foo"
 
 
@@ -211,8 +215,8 @@ def test_parameter_store_value_handling():
         Type='SecureString',
         Value=base64.b64encode(b'3').decode('utf8'),
     )
-    c = sc.Config(sc.Context(), sc.SmartLayer({
-        "a": sc.aws_parameter_store_getter(
+    c = config.Config(config.Context(), smarts.SmartLayer({
+        "a": builders.aws_parameter_store_getter(
             "/a",
             binary_decoder=converters.bytes_from_base64)}))
     assert c["a.b.c"] == "1"
@@ -230,11 +234,11 @@ def test_parameterstore_path_expansion():
         Type="String",
         Value="foo",
     )
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer({"a": sc.aws_parameter_store_getter("/a/{env}/root")}),
-            sc.ObjLayer({"env": "stage"}),
+            smarts.SmartLayer({"a": builders.aws_parameter_store_getter("/a/{env}/root")}),
+            statics.ObjLayer({"env": "stage"}),
         ]
     )
     assert c["a.c"] == "foo"

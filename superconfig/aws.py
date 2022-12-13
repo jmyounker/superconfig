@@ -3,7 +3,6 @@ import contextlib
 import boto3
 
 import config
-import converters
 import exceptions
 import helpers
 import loaders
@@ -112,7 +111,7 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
                 self.get_secret(
                     self.get_client(),
                     self.name(key, context, lower_layer),
-                    self.stage()))
+                    self.stage(context, lower_layer)))
         except Exception:
             raise exceptions.FetchFailure()
 
@@ -126,8 +125,10 @@ class SecretsManagerFetcher(loaders.AbstractFetcher):
             return key
         return self._name(context, lower_layer)
 
-    def stage(self):
-        return self._stage
+    def stage(self, context, lower_layer):
+        if self._stage is None:
+            return None
+        return self._stage(context, lower_layer)
 
     @staticmethod
     def get_secret(client, name, stage):

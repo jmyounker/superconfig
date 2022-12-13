@@ -21,7 +21,7 @@ layer_constructor_by_format = {}
 
 
 def register_layer_constructor(format: Format, layer_constructor) -> None:
-    layer_constructor_by_format[format] = layer_constructor
+    layer_constructor_by_format[format.value] = layer_constructor
 
 
 format_by_suffix = {}
@@ -36,7 +36,11 @@ def layer_constructor_for_filename(filename):
     _, suffix = os.path.splitext(filename)
     if suffix not in format_by_suffix:
         raise KeyError("suffix %r not known" % suffix)
-    return layer_constructor_by_format[format_by_suffix[suffix]]
+    return layer_constructor_by_format[format_by_suffix[suffix].value]
+
+
+def layer_constructor_for_format(format):
+    return layer_constructor_by_format[format.value]
 
 
 register_format("Properties")

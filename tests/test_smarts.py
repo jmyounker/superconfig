@@ -5,24 +5,27 @@ import freezegun
 import pytest
 
 from .helpers import is_expected_getitem
-import superconfig as sc
-import smarts
-import superconfig.vars as vars
+from superconfig import config
+from superconfig import converters
+from superconfig import loaders
+from superconfig import smarts
+from superconfig import statics
+from superconfig import vars
 
 
 def test_get_constant_leaf():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Constant(5)
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Constant(5)
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a"]
     assert c["a.b"] == 5
 
 
 def test_node_intercepts_descendants():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Constant(5)
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Constant(5)
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a"]
     assert c["a.b"] == 5
@@ -30,10 +33,10 @@ def test_node_intercepts_descendants():
 
 
 def test_node_hides_leaf():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Constant(5)
-    s["a.b.c"] = sc.Constant(6)
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Constant(5)
+    s["a.b.c"] = smarts.Constant(6)
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a"]
     assert c["a.b"] == 5
@@ -41,26 +44,26 @@ def test_node_hides_leaf():
 
 
 def test_node_without_result_continues():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.NotFound()
-    s["a.b.c"] = sc.Constant(6)
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.NotFound()
+    s["a.b.c"] = smarts.Constant(6)
+    c = config.Config(config.Context(), s)
     assert c["a.b.c"] == 6
 
 
 def test_env_getter_with_missing_envar(monkeypatch):
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Env("AB")
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Env("AB")
+    c = config.Config(config.Context(), s)
     monkeypatch.delenv("AB", raising=False)
     with pytest.raises(KeyError):
         _ = c["a.b"]
 
 
 def test_env_getter_with_envar(monkeypatch):
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Env("AB")
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Env("AB")
+    c = config.Config(config.Context(), s)
     monkeypatch.setenv("AB", "")
     assert c["a.b"] == ""
     monkeypatch.setenv("AB", "foo")
@@ -68,38 +71,38 @@ def test_env_getter_with_envar(monkeypatch):
 
 
 def test_getter_stack_empty_is_not_found():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([])
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([])
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a.b"]
 
 
 def test_getter_stack_with_one_works():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([sc.Constant(5)])
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([smarts.Constant(5)])
+    c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_getter_stack_first_found_blocks():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([sc.Constant(5), sc.Constant(6)])
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([smarts.Constant(5), smarts.Constant(6)])
+    c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_getter_stack_continues_if_not_found():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([sc.NotFound(), sc.Constant(6)])
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([smarts.NotFound(), smarts.Constant(6)])
+    c = config.Config(config.Context(), s)
     assert c["a.b"] == 6
 
 
 def test_how_to_make_envar_with_default(monkeypatch):
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([sc.Env("AB"), sc.Constant(6)])
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([smarts.Env("AB"), smarts.Constant(6)])
+    c = config.Config(config.Context(), s)
     monkeypatch.setenv("AB", "foo")
     assert c["a.b"] == "foo"
     monkeypatch.delenv("AB")
@@ -107,10 +110,10 @@ def test_how_to_make_envar_with_default(monkeypatch):
 
 
 def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
-    s = sc.SmartLayer()
-    s["a.b"] = sc.GetterStack([sc.Env("AB"), sc.Stop()])
-    s["a.b.c"] = sc.Constant(6)
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.GetterStack([smarts.Env("AB"), smarts.Stop()])
+    s["a.b.c"] = smarts.Constant(6)
+    c = config.Config(config.Context(), s)
     monkeypatch.setenv("AB", "foo")
     assert c["a.b.c"] == "foo"
     monkeypatch.delenv("AB")
@@ -119,30 +122,30 @@ def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
 
 
 def test_transform_on_found():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Transform(f=int, getter=sc.Constant("5"))
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Transform(f=int, getter=smarts.Constant("5"))
+    c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_transform_on_not_found_is_not_found():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Transform(f=int, getter=sc.NotFound())
-    c = sc.Config(sc.Context(), s)
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Transform(f=int, getter=smarts.NotFound())
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a.b"]
 
 
 def test_transform_failure():
-    s = sc.SmartLayer()
+    s = smarts.SmartLayer()
 
     class Oops(Exception):
         pass
 
     def oops(x):
         raise Oops
-    s["a.b"] = sc.Transform(f=oops, getter=sc.Constant(5))
-    c = sc.Config(sc.Context(), s)
+    s["a.b"] = smarts.Transform(f=oops, getter=smarts.Constant(5))
+    c = config.Config(config.Context(), s)
     with pytest.raises(ValueError):
         _ = c["a.b"]
     with pytest.raises(ValueError):
@@ -150,48 +153,48 @@ def test_transform_failure():
 
 
 def test_ignore_transform_failure():
-    s = sc.SmartLayer()
+    s = smarts.SmartLayer()
 
     class Oops(Exception):
         pass
 
     def oops(x):
         raise Oops
-    s["a.b"] = sc.IgnoreTransformErrors(sc.Transform(f=oops, getter=sc.Constant(5)))
-    c = sc.Config(sc.Context(), s)
+    s["a.b"] = smarts.IgnoreTransformErrors(smarts.Transform(f=oops, getter=smarts.Constant(5)))
+    c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
         _ = c["a.b"]
 
 
 def test_how_to_default_when_transform_fails():
-    s = sc.SmartLayer()
+    s = smarts.SmartLayer()
 
     class Oops(Exception):
         pass
 
     def oops(x):
         raise Oops
-    s["a.b"] = sc.GetterStack(
+    s["a.b"] = smarts.GetterStack(
         [
-            sc.IgnoreTransformErrors(sc.Transform(f=oops, getter=sc.Constant(5))),
-            sc.Constant(6),
+            smarts.IgnoreTransformErrors(smarts.Transform(f=oops, getter=smarts.Constant(5))),
+            smarts.Constant(6),
         ]
     )
-    c = sc.Config(sc.Context(), s)
+    c = config.Config(config.Context(), s)
     assert c["a.b"] == 6
 
 
 def test_expansion_layer():
-    c = sc.layered_config(sc.Context(), [
-            sc.KeyExpansionLayer(),
-            sc.SmartLayer(
+    c = config.layered_config(config.Context(), [
+            smarts.KeyExpansionLayer(),
+            smarts.SmartLayer(
                 {
-                    "a.foo.bar.foo.b": sc.Constant(1),
-                    "a.foo.baz.foo.b": sc.Constant(2),
+                    "a.foo.bar.foo.b": smarts.Constant(1),
+                    "a.foo.baz.foo.b": smarts.Constant(2),
                 },
             ),
-            sc.SmartLayer({}),
-            sc.ObjLayer({"f": "foo", "g": "bar", "h": {"i": "baz"}}),
+            smarts.SmartLayer({}),
+            statics.ObjLayer({"f": "foo", "g": "bar", "h": {"i": "baz"}}),
         ]
     )
     for k, res in [
@@ -203,10 +206,10 @@ def test_expansion_layer():
 
 
 def test_graft():
-    c = sc.layered_config(sc.Context(), [
-            sc.SmartLayer({
-                "a": sc.Graft(sc.ObjLayer({"b": 1, "c": 2})),
-                "a.b.d": sc.Constant(4)
+    c = config.layered_config(config.Context(), [
+            smarts.SmartLayer({
+                "a": smarts.Graft(statics.ObjLayer({"b": 1, "c": 2})),
+                "a.b.d": smarts.Constant(4)
             }),
         ]
     )
@@ -220,10 +223,10 @@ def test_graft():
 def test_cache_caches_records():
     ttl_s = 5
     with freezegun.freeze_time():
-        c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(ttl_s=smarts.constant(ttl_s)),
-            sc.SmartLayer({
-                "a": sc.Counter(0),
+        c = config.layered_config(config.Context(), [
+            smarts.CacheLayer(ttl_s=smarts.constant(ttl_s)),
+            smarts.SmartLayer({
+                "a": smarts.Counter(0),
             })
         ])
         assert c["a"] == 1
@@ -233,10 +236,10 @@ def test_cache_caches_records():
 def test_cache_flushes_after_timeout():
     timeout_s = 3
     with freezegun.freeze_time():
-        c = sc.layered_config(sc.Context(), [
-            sc.CacheLayer(ttl_s=smarts.constant(timeout_s)),
-            sc.SmartLayer({
-                "a": sc.Counter(0),
+        c = config.layered_config(config.Context(), [
+            smarts.CacheLayer(ttl_s=smarts.constant(timeout_s)),
+            smarts.SmartLayer({
+                "a": smarts.Counter(0),
             })
         ])
         assert c["a"] == 1
@@ -254,11 +257,11 @@ def test_cache_records_have_distinct_expirations():
         (6, [("a", 2), ("b", 11)]),
         (9, [("a", 2), ("b", 12)]),
     ]
-    c = sc.layered_config(sc.Context(), [
-        sc.CacheLayer(ttl_s=smarts.constant(ttl_s)),
-        sc.SmartLayer({
-            "a": sc.Counter(0),
-            "b": sc.Counter(10),
+    c = config.layered_config(config.Context(), [
+        smarts.CacheLayer(ttl_s=smarts.constant(ttl_s)),
+        smarts.SmartLayer({
+            "a": smarts.Counter(0),
+            "b": smarts.Counter(10),
         })
     ])
     now = datetime.datetime.now()
@@ -269,13 +272,13 @@ def test_cache_records_have_distinct_expirations():
 
 
 def test_key_expansion_layer():
-    s = sc.SmartLayer()
-    s["a.b"] = sc.Constant(5)
-    c = sc.layered_config(
-        sc.Context(),
+    s = smarts.SmartLayer()
+    s["a.b"] = smarts.Constant(5)
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.KeyExpansionLayer(),
-            sc.IndexLayer({
+            smarts.KeyExpansionLayer(),
+            config.IndexLayer({
                 "a.b": 1,
                 "env": "b",
             }),
@@ -290,13 +293,13 @@ def test_key_expansion_layer():
 def test_getter_to_layer_adapter(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1, "b": {"c": 2}}))
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.GetterAsLayer(
-                sc.AutoRefreshGetter(
-                    layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(x))),
-                    fetcher=sc.FileFetcher(vars.compile(str(f))),
+            smarts.GetterAsLayer(
+                loaders.AutoRefreshGetter(
+                    layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_json(converters.string_from_bytes(x))),
+                    fetcher=loaders.FileFetcher(vars.compile(str(f))),
                 ),
             ),
         ]
@@ -308,13 +311,13 @@ def test_getter_to_layer_adapter(tmp_path):
 def test_smart_layer_root_getter(tmp_path):
     f = tmp_path / "foo.json"
     f.write_text(json.dumps({"a": 1, "b": {"c": 2}}))
-    c = sc.layered_config(
-        sc.Context(),
+    c = config.layered_config(
+        config.Context(),
         [
-            sc.SmartLayer({
-                "": sc.AutoRefreshGetter(
-                    layer_constructor=lambda x: sc.ObjLayer(sc.obj_from_json(sc.string_from_bytes(x))),
-                    fetcher=sc.FileFetcher(vars.compile(str(f))),
+            smarts.SmartLayer({
+                "": loaders.AutoRefreshGetter(
+                    layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_json(converters.string_from_bytes(x))),
+                    fetcher=loaders.FileFetcher(vars.compile(str(f))),
                 ),
             }),
         ]

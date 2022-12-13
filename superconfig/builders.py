@@ -2,6 +2,7 @@
 from typing import Tuple, Any
 
 import aws
+import converters
 import formats
 import config
 import loaders
@@ -10,7 +11,13 @@ import vars
 
 
 def config_stack(*args, context=None):
-    return config.layered_config(context or config.Context(), list(args))
+    layers = []
+    for x in args:
+        if isinstance(x, dict):
+            layers.append(smarts.SmartLayer(x))
+        else:
+            layers.append(x)
+    return config.layered_config(context or config.Context(), layers)
 
 
 def aws_parameter_store_layer(
@@ -94,50 +101,37 @@ def aws_parameter_store_getter(
 # config = layer_config(
 #     [
 #         cache_layer(ttl_s=30, neg_ttl_s=10),
-#         smart_layer(
-#             {
-#                 "db.conn.*.*": sqlalchemy_connection_graft(config_key="db.conn.{1}.{2}"),
-#             }
-#         ),
+#         {"db.conn.*.*": sqlalchemy_connection_graft(config_key="db.conn.{1}.{2}")},
 #         file_layer(name="{env.user}/.config/overrides.json", refresh_s=from_key("{config.refresh}")),
-#         smart_layer(
-#             {
-#                 "db.conn.*.*": aws_secrets_manager_graft(name="db.conn.{env}.{1}.{2}", format=format.Json)
-#             }
-#         ),
+#         {"db.conn.*.*": aws_secretsmanager(name="db.conn.{env}.{1}.{2}", format=format.Json)},
 #         aws_parameter_store_layer(prefix="/{env}/app", ttl_s=30, neg_ttl_s=10, refresh_s=60),
 #         file_layer(filename="{env.config.sops}", refresh_s=60),
 #         file_layer(filename="{env.config}", refresh_s=60),
 #         file_layer(filename="{env.config.common}", refresh_s=60),
-#         smart_layer(
-#             {
-#                 "env.config.common": value(
-#                     envars=["APP_CONFIG_COMMON"],
-#                     default=expansion("{project_root}/config/config.[yaml|json]")
-#                 )
-#                 "env.config": value(
-#                     envars=["APP_CONFIG"],
-#                     default=expansion("{project_root}/config/{env}/config.[yaml|json]")
-#                 )
-#                 "env.config.sops": value(
-#                     envars=["APP_CONFIG_SOPS"],
-#                     default=expansion("{project_root}/config/{env}/secrets.enc")
-#                 )
-#             }
-#         ),
-#         smart_layer(
-#             {
-#                 "env.user": username(),
-#                 "env.root": project_root(),
-#                 "env": envar(envars=["APP_ENV", "ENV"], required=True)
-#                 "config.refresh": value(envars=["APP_OVERRIDE_REFRESH"], default=30, transform=int)
-#                 "aws.enabled": constant(False),
-#             }
-#         ),
+#         {
+#             "env.config.common": value(
+#                 envars=["APP_CONFIG_COMMON"],
+#                 default="{project_root}/config/config.[yaml|json]"
+#             ),
+#             "env.config": value(
+#                 envars=["APP_CONFIG"],
+#                 default="{project_root}/config/{env}/config.[yaml|json]"
+#             ),
+#             "env.config.sops": value(
+#                 envars=["APP_CONFIG_SOPS"],
+#                 default="{project_root}/config/{env}/secrets.enc"
+#             ),
+#         }, {
+#             "env.user": username(),
+#             "env.root": project_root(),
+#             "env": envar(envars=["APP_ENV", "ENV"], required=True)
+#             "config.refresh": value(envars=["APP_OVERRIDE_REFRESH"], default=30, transform=int)
+#             "aws.enabled": constant(False),
+#         },
 #         )
 #     ]
 # )
-
+#
 
 class NoDefault:
     pass
@@ -148,7 +142,10 @@ def value(
     envar=None,
     envars=None,
     default=NoDefault,
+    stop=False,
 ):
+    if stop and default != NoDefault:
+        raise ValueError("default and stop are mutually incompatible")
     if envars is None:
         envars = []
     if envar is not None:
@@ -159,8 +156,10 @@ def value(
     getters.append(smarts.BaseKeyReference())
     if default != NoDefault:
         getters.append(smarts.Constant(default))
-    else:
+    elif stop:
         getters.append(smarts.Stop)
+    else:
+        getters.append(smarts.NotFound)
     stack = smarts.GetterStack(getters)
     if transform is None:
         return stack
@@ -221,3 +220,26 @@ def dynamic_layer_constructor(obj_with_filename):
 
     return _wrapped
 
+
+def aws_secretsmanager_getter(
+        name=None,
+        format=None,
+        stage=None,
+        binary_decoder=None,
+):
+    if format is None:
+        layer_constructor = smarts.constant
+    else:
+        layer_constructor=formats.layer_constructor_for_format(format)
+    return loaders.AutoRefreshGetter(
+        layer_constructor=layer_constructor,
+        fetcher=aws.SecretsManagerFetcher(
+            name=None if name is None else vars.compile(name),
+            stage=stage,
+            binary_decoder=binary_decoder,
+        )
+    )
+
+
+class Decoders:
+    base64 = converters.bytes_from_base64

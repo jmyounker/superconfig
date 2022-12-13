@@ -4,13 +4,13 @@ from .helpers import is_expected_getitem
 from config import LayerCake
 from config import layered_config
 from superconfig.exceptions import LoadFailure
-from superconfig import PropertiesLayer
-from superconfig import Config
-from superconfig import ObjLayer
-from superconfig import InnerObjLayer
-from superconfig import IniLayer
-from superconfig import Context
-from superconfig import ConstantLayer
+from superconfig.statics import PropertiesLayer
+from superconfig.config import Config
+from superconfig.statics import ObjLayer
+from superconfig.statics import InnerObjLayer
+from superconfig.statics import IniLayer
+from superconfig.config import Context
+from superconfig.config import ConstantLayer
 
 
 def test_getitem():
