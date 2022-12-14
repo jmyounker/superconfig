@@ -59,7 +59,7 @@
 # DONE(jmyounker): Create file builder
 # DONE(jmyounker): Create AWS parameter store builder
 # DONE(jmyounker): Value builder
-# TODO(jmyounker): Create AWS secrets builder
+# DONE(jmyounker): Create AWS secrets builder
 # TODO(jmyounker): Clean up value() interface constructors
 # TODO(jmyounker): Make aws property loader prefix into a value()
 # DONE(jmyounker): Make aws secrets loader name a value()
@@ -74,3 +74,4 @@
 # TODO(jmyounker): Add auto-naming to layer construction
 # TODO(jmyounker): Simplify smart layer construction in builder tests
 # DONE(jmyounker): Fix damn circular imports
+# TODO(jmyounker): Add pure function getters
