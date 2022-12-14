@@ -75,3 +75,5 @@
 # TODO(jmyounker): Simplify smart layer construction in builder tests
 # DONE(jmyounker): Fix damn circular imports
 # TODO(jmyounker): Add pure function getters
+# TODO(jmyounker): Try out pure function getter interface
+# TODO(jmyounker): Try out pure function layer interface

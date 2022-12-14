@@ -124,7 +124,7 @@ def aws_parameter_store_getter(
 #             ),
 #         }, {
 #             "env.user": username(),
-#             "env.root": project_root(),
+#             "env.root": function(your_project_root_function),
 #             "env": envar(envars=["APP_ENV", "ENV"], required=True)
 #             "config.refresh": value(envars=["APP_OVERRIDE_REFRESH"], default=30, transform=int)
 #             "aws.enabled": constant(False),
