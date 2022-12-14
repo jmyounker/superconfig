@@ -1,5 +1,6 @@
 import base64
 import datetime
+import getpass
 import json
 
 import boto3
@@ -287,3 +288,8 @@ def test_aws_secretsmanager_getter():
         )},
     )
     assert c["a.b.c.d"] == 1
+
+
+def test_username():
+    c = builders.config_stack({"a": builders.username()})
+    assert c["a"] == getpass.getuser()

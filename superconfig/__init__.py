@@ -48,7 +48,7 @@
 # DONE(jmyounker): TTL option value expansions
 # TODO(jmyounker): Test TTL option value expansions
 # TODO(jmyounker): Add project root directory builder
-# TODO(jmyounker): Add username builder
+# DONE(jmyounker): Add username builder
 # DONE(jmyounker): Make filename a value() field in the file loader
 # DONE(jmyounker): Define format types
 # DONE(jmyounker): Define format-types to constructors table

@@ -6,6 +6,7 @@ import converters
 import formats
 import config
 import loaders
+import misc
 import smarts
 import vars
 
@@ -243,3 +244,7 @@ def aws_secretsmanager_getter(
 
 class Decoders:
     base64 = converters.bytes_from_base64
+
+
+def username():
+    return misc.UsernameGetter()
