@@ -91,7 +91,6 @@ class ParameterNode:
         elif p["Type"] == "StringList":
             return config.Response.found_next(p["Value"].split(","))
         elif p["Type"] == "SecureString":
-            print(p["Value"])
             return config.Response.found_next(self.binary_decoder(p["Value"]))
         else:
             return config.Response.not_found_next

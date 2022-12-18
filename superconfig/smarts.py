@@ -59,7 +59,7 @@ def via(getter, key="", rest=None):
         rest = []
 
     # noinspection PyShadowingNames
-    def f(context, lower_layer, key=key, getter=getter):
+    def f(context, lower_layer, key=key, getter=getter, rest=rest):
         return getter.read(key, rest, context, lower_layer)
     return f
 
@@ -94,7 +94,7 @@ def config_value_constant_key(key):
 
     # noinspection PyShadowingNames
     def f(context, lower_layer, key=key):
-        resp = lower_layer.get_item(key, context, config.NullConfig)
+        resp = lower_layer.get_item(key, context, config.NullLayer)
         if not resp.found:
             raise KeyError()
         return resp.value

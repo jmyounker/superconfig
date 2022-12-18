@@ -69,7 +69,7 @@
 # TODO(jmyounker): Add required values
 # TODO(jmyounker): Per-getter caching
 # TODO(jmyounker): Allow parameterization of layer_constructor map
-# TODO(jmyounker): Replace is_enabled with variable mechanism
+# DONE(jmyounker): Replace is_enabled with variable mechanism
 # TODO(jmyounker): Improve names for vars and vars.compile
 # TODO(jmyounker): Add auto-naming to layer construction
 # TODO(jmyounker): Simplify smart layer construction in builder tests

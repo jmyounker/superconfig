@@ -56,7 +56,7 @@ class AutoRefreshGetter:
         self.clear_on_removal = clear_on_removal
         self.clear_on_fetch_failure = clear_on_fetch_failure
         self.clear_on_load_failure = clear_on_load_failure
-        self.is_enabled = is_enabled or self.always_enabled
+        self.is_enabled = is_enabled or smarts.constant(True)
 
     def read(self, key, rest, context, lower_layer):
         now = time.time()
@@ -64,7 +64,7 @@ class AutoRefreshGetter:
             return self.loaded_layer.get().get_item(".".join(rest), context, lower_layer)
         if self.load_lock.acquire(blocking=False):
             try:
-                if self.is_enabled(key, rest, context, lower_layer):
+                if self.is_enabled(context, lower_layer):
                     with self.fetcher.load(now, key, rest, context, lower_layer) as bin_data:
                         if bin_data is not None:
                             self.loaded_layer.set(self.layer_constructor(bin_data))
@@ -82,7 +82,7 @@ class AutoRefreshGetter:
                 if self.clear_on_load_failure:
                     self.loaded_layer.set(config.NullLayer)
                 self.next_load_s += now + self.retry_interval_s(context, lower_layer)
-            except Exception:
+            except Exception as e:
                 if self.clear_on_fetch_failure:
                     self.loaded_layer.set(config.NullLayer)
                 self.next_load_s += now + self.retry_interval_s(context, lower_layer)
@@ -142,7 +142,6 @@ class FileFetcher(AbstractFetcher):
             raise exceptions.DataSourceMissing()
         except IOError:
             raise exceptions.FetchFailure()
-        except Exception as e:
-            print(e)
-            raise e
+        except Exception:
+            raise
 

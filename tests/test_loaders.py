@@ -136,7 +136,7 @@ def test_autoload_enabled_when_true(tmp_path):
             layer_constructor=statics.ObjLayer.from_bytes,
             filename=vars.compile(str(f)),
             refresh_interval_s=vars.compile((check_period_s)),
-            is_enabled=aws.config_switch("builders.file_layer.is_enabled"),
+            is_enabled=vars.compile(vars.Key("builders.file_layer.is_enabled")),
         ),
         smarts.SmartLayer({
             "builders.file_layer.is_enabled": smarts.Constant(True),
@@ -154,7 +154,7 @@ def test_autoload_disabled_when_false(tmp_path):
             layer_constructor=statics.ObjLayer.from_bytes,
             filename=vars.compile(str(f)),
             refresh_interval_s=vars.compile(check_period_s),
-            is_enabled=aws.config_switch("builders.file_layer.is_enabled"),
+            is_enabled=vars.compile(vars.Key("builders.file_layer.is_enabled")),
         ),
         smarts.SmartLayer({
             "builders.file_layer.is_enabled": smarts.Constant(False),
@@ -173,7 +173,7 @@ def test_autoload_disabled_when_missing(tmp_path):
             layer_constructor=statics.ObjLayer.from_bytes,
             filename=vars.compile(str(f)),
             refresh_interval_s=vars.compile(check_period_s),
-            is_enabled=aws.config_switch("builders.file_layer.is_enabled"),
+            is_enabled=vars.compile(vars.Key("builders.file_layer.is_enabled")),
         ),
     ])
     with pytest.raises(KeyError):
