@@ -40,14 +40,14 @@
 # DONE(jmyounker): Create caching getter
 # DONE(jmyounker): Think about high-level UI
 # TODO(jmyounker): Add sqlalchemy connector
-# TODO(jmyounker): Add sops file layer
+# DONE(jmyounker): Add sops file layer
+# TODO(jmyounker): Test sops file layer
 # DONE(jmyounker): Add from_key to extract values anywhere -- value(ctx, lower) interface
 # DONE(jmyounker): Add generic parameter expansions for refreshes
 # DONE(jmyounker): Add format based autodetection - decomposed into discrete tasks
 # DONE(jmyounker): Improve TTL option names
 # DONE(jmyounker): TTL option value expansions
 # TODO(jmyounker): Test TTL option value expansions
-# TODO(jmyounker): Add project root directory builder
 # DONE(jmyounker): Add username builder
 # DONE(jmyounker): Make filename a value() field in the file loader
 # DONE(jmyounker): Define format types
@@ -77,3 +77,8 @@
 # TODO(jmyounker): Add pure function getters
 # TODO(jmyounker): Try out pure function getter interface
 # TODO(jmyounker): Try out pure function layer interface
+
+# post-release/someday
+# TODO(jmyounker): Etcd value getter
+# TODO(jmyounker): Consul value getter
+# TODO(jmyounker): Hashicorp vault secrets getter
