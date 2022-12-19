@@ -61,7 +61,7 @@
 # DONE(jmyounker): Value builder
 # DONE(jmyounker): Create AWS secrets builder
 # TODO(jmyounker): Clean up value() interface constructors
-# TODO(jmyounker): Make aws property loader prefix into a value()
+# DONE(jmyounker): Make aws property loader prefix into a value()
 # DONE(jmyounker): Make aws secrets loader name a value()
 # DONE(jmyounker): Add auto base64 decodes for AWS loaders
 # TODO(jmyounker): Add envar only transform to builder.value
