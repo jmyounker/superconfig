@@ -28,6 +28,7 @@ def aws_parameter_store_layer(
         retry_interval_s=smarts.constant(10),
         ttl_s=smarts.constant(30),
         negative_ttl_s=smarts.constant(10),
+        is_enabled=None,
 ):
     return smarts.GetterAsLayer(
         aws_parameter_store_getter(
@@ -36,6 +37,7 @@ def aws_parameter_store_layer(
             retry_interval_s=retry_interval_s,
             ttl_s=ttl_s,
             negative_ttl_s=negative_ttl_s,
+            is_enabled=None if is_enabled is None else vars.compile(is_enabled),
         )
     )
 
@@ -47,6 +49,7 @@ def aws_parameter_store_getter(
     retry_interval_s=smarts.constant(10),
     ttl_s=smarts.constant(30),
     negative_ttl_s=smarts.constant(10),
+    is_enabled=None,
 ):
     return smarts.CacheGetter(
         loaders.AutoRefreshGetter(
@@ -57,6 +60,7 @@ def aws_parameter_store_getter(
             ),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
+            is_enabled=None if is_enabled is None else vars.compile(is_enabled),
         ),
         ttl_s=ttl_s,
         negative_ttl_s=negative_ttl_s,
@@ -178,7 +182,7 @@ def file_layer(
     return FileLayerLoader(
         filename=vars.compile(filename),
         layer_constructor=layer_constructor,
-        is_enabled=is_enabled,
+        is_enabled=None if is_enabled is None else vars.compile(is_enabled),
         refresh_interval_s=vars.compile(refresh_interval_s),
         retry_interval_s=vars.compile(retry_interval_s),
     )
@@ -263,7 +267,7 @@ def sops_layer(
         filename=vars.compile(filename),
         reader=lambda x, sops_args=sops_args: loaders.sops_reader(x, sops_args),
         layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_yaml(x)),
-        is_enabled=is_enabled,
+        is_enabled=None if is_enabled is None else vars.compile(is_enabled),
         refresh_interval_s=vars.compile(refresh_interval_s),
         retry_interval_s=vars.compile(retry_interval_s),
     )
