@@ -102,11 +102,20 @@ class AbstractFetcher:
         raise NotImplementedError
 
 
+def simple_reader(filename):
+    with open(filename, 'rb') as f:
+        return f.read()
+
+
 class FileFetcher(AbstractFetcher):
-    def __init__(self, filename_value):
+    def __init__(self, filename_value, reader=simple_reader):
         self.name = filename_value
         self.filename = None
         self.last_mtime = 0
+        if reader is None:
+            self.reader = simple_reader
+        else:
+            self.reader = reader
 
     def load_required(self, filename):
         # The expansion works because there is an implicit sequencing between
@@ -135,8 +144,7 @@ class FileFetcher(AbstractFetcher):
             # Get stat before, so if the file is updated after the stat, then it will
             # be found as out-of-date on the next load.
             s = os.stat(filename)
-            with open(filename, 'rb') as f:
-                yield f.read()
+            yield self.reader(filename)
             self.last_mtime = s.st_mtime
         except FileNotFoundError:
             raise exceptions.DataSourceMissing()
