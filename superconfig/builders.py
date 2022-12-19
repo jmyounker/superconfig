@@ -8,6 +8,7 @@ import config
 import loaders
 import misc
 import smarts
+import statics
 import vars
 
 
@@ -191,11 +192,12 @@ class FileLayerLoader:
             refresh_interval_s=smarts.constant(10),
             retry_interval_s=smarts.constant(5),
             is_enabled=None,
+            reader=loaders.simple_reader,
             clear_on_removal=False,
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
     ):
-        self.file_fetcher = loaders.FileFetcher(filename)
+        self.file_fetcher = loaders.FileFetcher(filename, reader=reader)
         self.layer_constructor = layer_constructor or dynamic_layer_constructor(self.file_fetcher)
         self.auto_loader = loaders.AutoRefreshGetter(
             layer_constructor=self.layer_constructor,
@@ -248,3 +250,20 @@ class Decoders:
 
 def username():
     return misc.UsernameGetter()
+
+
+def sops_layer(
+    filename,
+    sops_args=None,
+    is_enabled=None,
+    refresh_interval_s=smarts.constant(10),
+    retry_interval_s=smarts.constant(5),
+):
+    return FileLayerLoader(
+        filename=vars.compile(filename),
+        reader=lambda x, sops_args=sops_args: loaders.sops_reader(x, sops_args),
+        layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_yaml(x)),
+        is_enabled=is_enabled,
+        refresh_interval_s=vars.compile(refresh_interval_s),
+        retry_interval_s=vars.compile(retry_interval_s),
+    )

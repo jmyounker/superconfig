@@ -1,7 +1,10 @@
 import contextlib
 import os
+import subprocess
 import time
 import threading
+from subprocess import Popen
+from typing import Any
 
 import config
 import exceptions
@@ -102,13 +105,8 @@ class AbstractFetcher:
         raise NotImplementedError
 
 
-def simple_reader(filename):
-    with open(filename, 'rb') as f:
-        return f.read()
-
-
 class FileFetcher(AbstractFetcher):
-    def __init__(self, filename_value, reader=simple_reader):
+    def __init__(self, filename_value, reader=None):
         self.name = filename_value
         self.filename = None
         self.last_mtime = 0
@@ -152,4 +150,23 @@ class FileFetcher(AbstractFetcher):
             raise exceptions.FetchFailure()
         except Exception:
             raise
+
+
+def simple_reader(filename):
+    with open(filename, 'rb') as f:
+        return f.read()
+
+
+def sops_reader(filename, sops_args):
+    p: Popen[bytes] = subprocess.Popen(
+        ["sops", "--output-type", "yaml"] + sops_args + ["-d", filename],
+        stdin=None,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=False
+    )
+    (out, err) = p.communicate()
+    if p.returncode:
+        raise exceptions.FetchFailure("sops read failed: [returncode {}] {}".format(p.returncode, err))
+    return out
 
