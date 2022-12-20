@@ -73,5 +73,5 @@ def bytes_from_base64(x: AnyStr) -> bytes:
     try:
         return base64.b64decode(x, validate=True)
     except binascii.Error:
-        raise exceptions.LoadFailure("characters outside base64")
+        raise LoadFailure("characters outside base64")
 
