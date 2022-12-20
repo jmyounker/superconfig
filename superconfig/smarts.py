@@ -25,8 +25,10 @@ class SmartLayer(config.Layer):
             self[key] = getter
 
     def __setitem__(self, key, getter):
-        self.constant_key_getters[key] = getter
-        self.key_pattern_getters.append((re.compile(r"^[^.]+$"), getter))
+        if "{}" not in key:
+            self.constant_key_getters[key] = getter
+        else:
+            self.key_pattern_getters.append((re.compile(key.replace("{}", r"^[^.]+$")), getter))
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         if key == "" and "" not in self.constant_key_getters:
