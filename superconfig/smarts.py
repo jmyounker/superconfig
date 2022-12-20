@@ -47,9 +47,13 @@ class SmartLayer(config.Layer):
                 if resp.is_found or resp.must_stop or resp.go_next_layer:
                     return resp
             for ptrn, getter in self.key_pattern_getters[i]:
-                if not ptrn.search(k):
+                match = ptrn.search(k)
+                if not match:
                     continue
+                # Extract matches
+                # Attach matches to context
                 resp = getter.read(k, indexes[i:len(indexes)], context, lower_layer)
+                # Pop context
                 if resp.is_found or resp.must_stop or resp.go_next_layer:
                     return resp
         return config.Response.not_found
