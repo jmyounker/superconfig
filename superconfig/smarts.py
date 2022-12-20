@@ -18,7 +18,9 @@ class SmartLayer(config.Layer):
     def __init__(self, getters=None):
         if getters is None:
             getters = {}
-        self.constant_key_getters = getters
+        self.constant_key_getters = {}
+        for key, getter in getters.items():
+            self[key] = getter
 
     def __setitem__(self, key, getter):
         self.constant_key_getters[key] = getter
