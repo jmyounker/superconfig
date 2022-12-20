@@ -68,17 +68,18 @@
 # TODO(jmyounker): Add do-not-fetch-value-from-config to builder.value so it can be used for things that must be envars or defaults
 # TODO(jmyounker): Add required values
 # TODO(jmyounker): Per-getter caching
-# TODO(jmyounker): Allow parameterization of layer_constructor map
+# DONE(jmyounker): Allow parameterization of layer_constructor map
 # DONE(jmyounker): Replace is_enabled with variable mechanism
 # TODO(jmyounker): Improve names for vars and vars.compile
 # TODO(jmyounker): Add auto-naming to layer construction
 # TODO(jmyounker): Simplify smart layer construction in builder tests
 # DONE(jmyounker): Fix damn circular imports
 # TODO(jmyounker): Add pure function getters
-# TODO(jmyounker): Try out pure function getter interface
-# TODO(jmyounker): Try out pure function layer interface
+# DONE(jmyounker): Automagic value getter expansion
 
 # post-release/someday
 # TODO(jmyounker): Etcd value getter
 # TODO(jmyounker): Consul value getter
 # TODO(jmyounker): Hashicorp vault secrets getter
+# TODO(jmyounker): Try out pure function getter interface
+# TODO(jmyounker): Try out pure function layer interface
