@@ -309,10 +309,10 @@ def ExpansionGetter(Getter):
         resp = self.geter(key, rest, context, lower_layer)
         if not resp.is_found:
             return resp
-        expansions = helpers.expansions(c)
+        expansions = helpers.expansions(resp.value)
         if not expansions:
             return resp
-        return resp.new_value(helpers.expand(c, expansions, context, lower_layer))
+        return resp.new_value(helpers.expand(resp.value, expansions, context, lower_layer))
 
 
 def _cache(cache, cache_key, resp, now, ttl_s):
