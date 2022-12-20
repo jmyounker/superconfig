@@ -335,6 +335,12 @@ def test_matched_pattern_getters():
         ({"one": FoundKey()}, "one.two", ("one", ["two"])),
         ({"{}": FoundKey()}, "one", ("one", [])),
         ({"{}": FoundKey()}, "one.two", ("one", ["two"])),
+        ({"{}.{}": FoundKey()}, "one.two", ("one.two", [])),
+        ({"{}.{}": FoundKey()}, "one.two.three", ("one.two", ["three"])),
+        ({"one.{}": FoundKey()}, "one.two.three", ("one.two", ["three"])),
+        ({"{}.two": FoundKey()}, "one.two.three", ("one.two", ["three"])),
+        ({"{}.two": FoundKey()}, "one", KeyError),
+        ({"one": smarts.Constant(1), "{}": smarts.Constant(2)}, "one", 1),
     ]
     for getters, key, expected_value in test_cases:
         c = config.layered_config(
