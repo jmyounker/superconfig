@@ -1,6 +1,7 @@
 """Perform specific actions for specific keys."""
 
 import os
+import re
 import time
 from typing import Any
 from typing import AnyStr
@@ -19,11 +20,13 @@ class SmartLayer(config.Layer):
         if getters is None:
             getters = {}
         self.constant_key_getters = {}
+        self.key_pattern_getters = []
         for key, getter in getters.items():
             self[key] = getter
 
     def __setitem__(self, key, getter):
         self.constant_key_getters[key] = getter
+        self.key_pattern_getters.append((re.compile(r"^[^.]+$"), getter))
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         if key == "" and "" not in self.constant_key_getters:
@@ -35,11 +38,16 @@ class SmartLayer(config.Layer):
                 return resp
         for i in range(1, len(indexes)+1):
             k = ".".join(indexes[0:i])
-            if k not in self.constant_key_getters:
-                continue
-            resp = self.constant_key_getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
-            if resp.is_found or resp.must_stop or resp.go_next_layer:
-                return resp
+            if k in self.constant_key_getters:
+                resp = self.constant_key_getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
+                if resp.is_found or resp.must_stop or resp.go_next_layer:
+                    return resp
+            for ptrn, getter in self.key_pattern_getters:
+                if not ptrn.search(k):
+                    continue
+                resp = getter.read(k, indexes[i:len(indexes)], context, lower_layer)
+                if resp.is_found or resp.must_stop or resp.go_next_layer:
+                    return resp
         return config.Response.not_found
 
 

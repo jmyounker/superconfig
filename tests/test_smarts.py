@@ -324,3 +324,21 @@ def test_smart_layer_root_getter(tmp_path):
     )
     assert c["a"] == 1
     assert c["b.c"] == 2
+
+
+def test_matched_pattern_getters():
+    class FoundKey:
+        def read(self, key, rest, *args, **kwargs):
+            return config.Response.found(key, rest)
+    test_cases = [
+        ({"one": FoundKey()}, "one", ("one", [])),
+        ({"one": FoundKey()}, "one.two", ("one", ["two"])),
+        ({"{}": FoundKey()}, "one", ("one", [])),
+        ({"{}": FoundKey()}, "one.two", ("one", ["two"])),
+    ]
+    for getters, key, expected_value in test_cases:
+        c = config.layered_config(
+            config.Context(),
+            [smarts.SmartLayer(getters)],
+        )
+        is_expected_getitem(c, key, expected_value)
