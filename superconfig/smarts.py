@@ -1,5 +1,6 @@
 """Perform specific actions for specific keys."""
 
+import collections
 import os
 import re
 import time
@@ -20,7 +21,7 @@ class SmartLayer(config.Layer):
         if getters is None:
             getters = {}
         self.constant_key_getters = {}
-        self.key_pattern_getters = []
+        self.key_pattern_getters = collections.defaultdict(list)
         for key, getter in getters.items():
             self[key] = getter
 
@@ -28,7 +29,8 @@ class SmartLayer(config.Layer):
         if "{}" not in key:
             self.constant_key_getters[key] = getter
         else:
-            self.key_pattern_getters.append((re.compile("^{}$".format(key.replace("{}", r"[^.]+"))), getter))
+            n = len(key.split("."))
+            self.key_pattern_getters[n].append((re.compile("^{}$".format(key.replace("{}", r"[^.]+"))), getter))
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
         if key == "" and "" not in self.constant_key_getters:
@@ -44,7 +46,7 @@ class SmartLayer(config.Layer):
                 resp = self.constant_key_getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
                 if resp.is_found or resp.must_stop or resp.go_next_layer:
                     return resp
-            for ptrn, getter in self.key_pattern_getters:
+            for ptrn, getter in self.key_pattern_getters[i]:
                 if not ptrn.search(k):
                     continue
                 resp = getter.read(k, indexes[i:len(indexes)], context, lower_layer)
