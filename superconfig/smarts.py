@@ -301,7 +301,7 @@ class CacheGetter(Getter):
         return _cache(self.cache, cache_key, resp, now, self.negative_ttl_s(constant, lower_layer))
 
 
-def ExpansionGetter(Getter):
+class ExpansionGetter(Getter):
     def __init__(self, getter):
         self.getter = getter
 
