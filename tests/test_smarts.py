@@ -340,7 +340,10 @@ def test_matched_pattern_getters():
         ({"one.{}": FoundKey()}, "one.two.three", ("one.two", ["three"])),
         ({"{}.two": FoundKey()}, "one.two.three", ("one.two", ["three"])),
         ({"{}.two": FoundKey()}, "one", KeyError),
-        ({"{}": builders.value(default="one", expand_result=True)}, "one.two", "one"),
+        ({"{}": builders.value(default="{1}", expand_result=True)}, "one.two", "one"),
+        ({"{}.{}": builders.value(default="{2}.{1}", expand_result=True)}, "one.two", "two.one"),
+        ({"{}.{}": builders.value(default="{1}.{2}", expand_result=True)}, "one.two.three", "one.two"),
+        ({"{}.{}": builders.value(default="{1}.{2}", expand_result=True)}, "one", KeyError),
     ]
     for getters, key, expected_value in test_cases:
         c = config.layered_config(

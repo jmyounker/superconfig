@@ -1,5 +1,6 @@
 """Configuration library."""
 
+import contextlib
 from typing import Any
 from typing import AnyStr
 from typing import NamedTuple
@@ -89,7 +90,22 @@ class Context:
     """State which is passed between levels.
 
     Allows separation between Config logic and layer state."""
-    pass
+
+    def __init__(self):
+        self._globs = []
+
+    @property
+    def globs(self):
+        if not self._globs:
+            return {}
+        return self._globs[-1]
+
+    @contextlib.contextmanager
+    def and_globs(self, g):
+        self._globs.append(g)
+        yield self
+        self._globs.pop()
+
 
 
 class Layer:

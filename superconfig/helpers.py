@@ -32,7 +32,7 @@ def expand(tmpl, expansions, context: config.Context, lower_layer: config.Layer)
                 return None
             if exp not in context.globs:
                 return None
-            replacements.append('{%s}' % exp, context.globs[exp])
+            replacements.append(('{%s}' % exp, context.globs[exp]))
         else:
             resp = lower_layer.get_item(exp, context, config.NullLayer)
             if not resp.is_found:

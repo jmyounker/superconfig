@@ -50,10 +50,9 @@ class SmartLayer(config.Layer):
                 match = ptrn.search(k)
                 if not match:
                     continue
-                # Extract matches
-                # Attach matches to context
-                resp = getter.read(k, indexes[i:len(indexes)], context, lower_layer)
-                # Pop context
+                globs = {str(j+1): x for j, x in enumerate(match.groups())}
+                with context.and_globs(globs) as ctx:
+                    resp = getter.read(k, indexes[i:len(indexes)], ctx, lower_layer)
                 if resp.is_found or resp.must_stop or resp.go_next_layer:
                     return resp
         return config.Response.not_found
