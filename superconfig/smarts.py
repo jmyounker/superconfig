@@ -306,7 +306,7 @@ def ExpansionGetter(Getter):
         self.getter = getter
 
     def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
-        resp = self.geter(key, rest, context, lower-layer)
+        resp = self.geter(key, rest, context, lower_layer)
         if not resp.is_found:
             return resp
         expansions = helpers.expansions(c)
