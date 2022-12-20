@@ -18,24 +18,24 @@ class SmartLayer(config.Layer):
     def __init__(self, getters=None):
         if getters is None:
             getters = {}
-        self.getters = getters
+        self.constant_key_getters = getters
 
     def __setitem__(self, key, getter):
-        self.getters[key] = getter
+        self.constant_key_getters[key] = getter
 
     def get_item(self, key: AnyStr, context: config.Context, lower_layer: config.Layer) -> Tuple[int, int, Optional[Any]]:
-        if key == "" and "" not in self.getters:
+        if key == "" and "" not in self.constant_key_getters:
             return config.Response.not_found
         indexes = key.split(".")
-        if "" in self.getters:
-            resp = self.getters[""].read("", indexes[0:len(indexes)], context, lower_layer)
+        if "" in self.constant_key_getters:
+            resp = self.constant_key_getters[""].read("", indexes[0:len(indexes)], context, lower_layer)
             if resp.is_found or resp.must_stop or resp.go_next_layer:
                 return resp
         for i in range(1, len(indexes)+1):
             k = ".".join(indexes[0:i])
-            if k not in self.getters:
+            if k not in self.constant_key_getters:
                 continue
-            resp = self.getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
+            resp = self.constant_key_getters[k].read(k, indexes[i:len(indexes)], context, lower_layer)
             if resp.is_found or resp.must_stop or resp.go_next_layer:
                 return resp
         return config.Response.not_found
