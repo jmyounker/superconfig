@@ -7,11 +7,11 @@ import pytest
 from .helpers import is_expected_getitem
 from superconfig import config
 from superconfig import converters
+from superconfig import builders
 from superconfig import loaders
 from superconfig import smarts
 from superconfig import statics
 from superconfig import vars
-
 
 def test_get_constant_leaf():
     s = smarts.SmartLayer()
@@ -329,7 +329,7 @@ def test_smart_layer_root_getter(tmp_path):
 def test_matched_pattern_getters():
     class FoundKey:
         def read(self, key, rest, *args, **kwargs):
-            return config.Response.found(key, rest)
+            return config.Response.found((key, rest))
     test_cases = [
         ({"one": FoundKey()}, "one", ("one", [])),
         ({"one": FoundKey()}, "one.two", ("one", ["two"])),
@@ -340,11 +340,11 @@ def test_matched_pattern_getters():
         ({"one.{}": FoundKey()}, "one.two.three", ("one.two", ["three"])),
         ({"{}.two": FoundKey()}, "one.two.three", ("one.two", ["three"])),
         ({"{}.two": FoundKey()}, "one", KeyError),
-        ({"one": smarts.Constant(1), "{}": smarts.Constant(2)}, "one", 1),
+        ({"{}": builders.value(default="one", expand_result=True)}, "one.two", "one"),
     ]
     for getters, key, expected_value in test_cases:
         c = config.layered_config(
             config.Context(),
             [smarts.SmartLayer(getters)],
         )
-        is_expected_getitem(c, key, expected_value)
+        assert is_expected_getitem(c, key, expected_value)

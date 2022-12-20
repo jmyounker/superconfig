@@ -149,6 +149,7 @@ def value(
     envars=None,
     default=NoDefault,
     stop=False,
+    expand_result=False,
 ):
     if stop and default != NoDefault:
         raise ValueError("default and stop are mutually incompatible")
@@ -166,11 +167,12 @@ def value(
         getters.append(smarts.Stop)
     else:
         getters.append(smarts.NotFound)
-    stack = smarts.GetterStack(getters)
-    if transform is None:
-        return stack
-    return smarts.Transform(transform, stack)
-
+    v = smarts.GetterStack(getters)
+    if expand_result:
+        v = smarts.ExpansionGetter(v)
+    if transform is not None:
+        v = smarts.Transform(transform, v)
+    return v
 
 def file_layer(
     filename,  # Can be: "foo" "{oo}" GETTER Key()

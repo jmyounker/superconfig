@@ -280,7 +280,7 @@ class CacheLayer:
             return resp
 
 
-class CacheGetter:
+class CacheGetter(Getter):
     def __init__(self, getter, ttl_s=constant(5), negative_ttl_s=constant(0)):
         self.getter = getter
         self.cache = {}
@@ -299,6 +299,20 @@ class CacheGetter:
         if not self.negative_ttl_s(context, lower_layer):
             return resp
         return _cache(self.cache, cache_key, resp, now, self.negative_ttl_s(constant, lower_layer))
+
+
+def ExpansionGetter(Getter):
+    def __init__(self, getter):
+        self.getter = getter
+
+    def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
+        resp = self.geter(key, rest, context, lower-layer)
+        if not resp.is_found:
+            return resp
+        expansions = helpers.expansions(c)
+        if not expansions:
+            return resp
+        return resp.new_value(helpers.expand(c, expansions, context, lower_layer))
 
 
 def _cache(cache, cache_key, resp, now, ttl_s):
