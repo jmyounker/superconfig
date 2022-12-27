@@ -4,7 +4,6 @@ import subprocess
 import time
 import threading
 from subprocess import Popen
-from typing import Any
 
 import config
 import exceptions
