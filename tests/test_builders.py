@@ -249,6 +249,25 @@ def test_default_passes_through_transform():
     assert c["a.b"] == 1
 
 
+def test_env_specific_transform(monkeypatch):
+    c = builders.config_stack(
+        {"a.b": builders.value(envars=["ONE", "TWO"], env_transform=int, default="3")}
+    )
+    test_cases = [
+        ({"ONE": None, "TWO": None}, "3"),  # No envars, we get untransformed default
+        ({"ONE": "1", "TWO": None}, 1),  # First found envar gets passed through transform
+        ({"ONE": "1", "TWO": "2"}, 1),  # First envar is the top of the stack
+        ({"ONE": None, "TWO": "2"}, 2),  # And the second is below it
+    ]
+    for envars, expected in test_cases:
+        for k, v in envars.items():
+            if v is None:
+                monkeypatch.delenv(k, raising=False)
+            else:
+                monkeypatch.setenv(k, str(v))
+        assert c["a.b"] == expected
+
+
 def test_autoload_format_by_extension(tmp_path):
     test_cases = [
         ('{"a": {"b": 1}}\n', "foo.json", "a.b", 1),

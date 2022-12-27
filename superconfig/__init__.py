@@ -64,7 +64,7 @@
 # DONE(jmyounker): Make aws property loader prefix into a value()
 # DONE(jmyounker): Make aws secrets loader name a value()
 # DONE(jmyounker): Add auto base64 decodes for AWS loaders
-# TODO(jmyounker): Add envar only transform to builder.value
+# DONE(jmyounker): Add envar only transform to builder.value
 # TODO(jmyounker): Add do-not-fetch-value-from-config to builder.value so it can be used for things that must be envars or defaults
 # TODO(jmyounker): Add required values
 # TODO(jmyounker): Per-getter caching

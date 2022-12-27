@@ -147,6 +147,7 @@ def value(
     transform=None,
     envar=None,
     envars=None,
+    env_transform=None,
     default=NoDefault,
     stop=False,
     expand_result=False,
@@ -160,6 +161,8 @@ def value(
     getters = []
     for env in envars:
         getters.append(smarts.Env(env))
+    if env_transform:
+        getters = [smarts.Transform(env_transform, smarts.GetterStack(getters))]
     getters.append(smarts.BaseKeyReference())
     if default != NoDefault:
         getters.append(smarts.Constant(default))
