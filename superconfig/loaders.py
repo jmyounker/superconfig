@@ -7,7 +7,7 @@ from subprocess import Popen
 
 import config
 import exceptions
-import smarts
+import gtrs
 
 
 class AtomicRef:
@@ -40,8 +40,8 @@ class AutoRefreshGetter:
             self,
             layer_constructor,
             fetcher,
-            refresh_interval_s=smarts.constant(60),
-            retry_interval_s=smarts.constant(10),
+            refresh_interval_s=gtrs.constant(60),
+            retry_interval_s=gtrs.constant(10),
             clear_on_removal=True,
             clear_on_fetch_failure=False,
             clear_on_load_failure=False,
@@ -58,7 +58,7 @@ class AutoRefreshGetter:
         self.clear_on_removal = clear_on_removal
         self.clear_on_fetch_failure = clear_on_fetch_failure
         self.clear_on_load_failure = clear_on_load_failure
-        self.is_enabled = is_enabled or smarts.constant(True)
+        self.is_enabled = is_enabled or gtrs.constant(True)
 
     def read(self, key, rest, context, lower_layer):
         now = time.time()

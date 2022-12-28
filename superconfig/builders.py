@@ -7,7 +7,7 @@ import formats
 import config
 import loaders
 import misc
-import smarts
+import gtrs
 import statics
 import let
 
@@ -16,7 +16,7 @@ def config_stack(*args, context=None):
     layers = []
     for x in args:
         if isinstance(x, dict):
-            layers.append(smarts.SmartLayer(x))
+            layers.append(gtrs.SmartLayer(x))
         else:
             layers.append(x)
     return config.layered_config(context or config.Context(), layers)
@@ -24,13 +24,13 @@ def config_stack(*args, context=None):
 
 def aws_parameter_store_layer(
         parameter_store_base_path,
-        refresh_interval_s=smarts.constant(60),
-        retry_interval_s=smarts.constant(10),
-        ttl_s=smarts.constant(30),
-        negative_ttl_s=smarts.constant(10),
+        refresh_interval_s=gtrs.constant(60),
+        retry_interval_s=gtrs.constant(10),
+        ttl_s=gtrs.constant(30),
+        negative_ttl_s=gtrs.constant(10),
         is_enabled=None,
 ):
-    return smarts.GetterAsLayer(
+    return gtrs.GetterAsLayer(
         aws_parameter_store_getter(
             parameter_store_base_path=parameter_store_base_path,
             refresh_interval_s=refresh_interval_s,
@@ -45,15 +45,15 @@ def aws_parameter_store_layer(
 def aws_parameter_store_getter(
     parameter_store_base_path=None,
     binary_decoder=None,
-    refresh_interval_s=smarts.constant(60),
-    retry_interval_s=smarts.constant(10),
-    ttl_s=smarts.constant(30),
-    negative_ttl_s=smarts.constant(10),
+    refresh_interval_s=gtrs.constant(60),
+    retry_interval_s=gtrs.constant(10),
+    ttl_s=gtrs.constant(30),
+    negative_ttl_s=gtrs.constant(10),
     is_enabled=None,
 ):
-    return smarts.CacheGetter(
+    return gtrs.CacheGetter(
         loaders.AutoRefreshGetter(
-            layer_constructor=smarts.IndexGetterLayer,
+            layer_constructor=gtrs.IndexGetterLayer,
             fetcher=aws.AwsParameterStoreFetcher(
                 root=parameter_store_base_path,
                 binary_decoder=binary_decoder
@@ -160,21 +160,21 @@ def value(
         envars = [envar] + envars
     getters = []
     for env in envars:
-        getters.append(smarts.Env(env))
+        getters.append(gtrs.Env(env))
     if env_transform:
-        getters = [smarts.Transform(env_transform, smarts.GetterStack(getters))]
-    getters.append(smarts.BaseKeyReference())
+        getters = [gtrs.Transform(env_transform, gtrs.GetterStack(getters))]
+    getters.append(gtrs.BaseKeyReference())
     if default != NoDefault:
-        getters.append(smarts.Constant(default))
+        getters.append(gtrs.Constant(default))
     elif stop:
-        getters.append(smarts.Stop)
+        getters.append(gtrs.Stop)
     else:
-        getters.append(smarts.NotFound)
-    v = smarts.GetterStack(getters)
+        getters.append(gtrs.NotFound)
+    v = gtrs.GetterStack(getters)
     if expand_result:
-        v = smarts.ExpansionGetter(v)
+        v = gtrs.ExpansionGetter(v)
     if transform is not None:
-        v = smarts.Transform(transform, v)
+        v = gtrs.Transform(transform, v)
     return v
 
 
@@ -199,8 +199,8 @@ class FileLayerLoader:
             self,
             filename,
             layer_constructor,
-            refresh_interval_s=smarts.constant(10),
-            retry_interval_s=smarts.constant(5),
+            refresh_interval_s=gtrs.constant(10),
+            retry_interval_s=gtrs.constant(5),
             is_enabled=None,
             reader=loaders.simple_reader,
             clear_on_removal=False,
@@ -241,7 +241,7 @@ def aws_secretsmanager_getter(
         binary_decoder=None,
 ):
     if format is None:
-        layer_constructor = smarts.constant
+        layer_constructor = gtrs.constant
     else:
         layer_constructor=formats.layer_constructor_for_format(format)
     return loaders.AutoRefreshGetter(
@@ -266,8 +266,8 @@ def sops_layer(
     filename,
     sops_args=None,
     is_enabled=None,
-    refresh_interval_s=smarts.constant(10),
-    retry_interval_s=smarts.constant(5),
+    refresh_interval_s=gtrs.constant(10),
+    retry_interval_s=gtrs.constant(5),
 ):
     return FileLayerLoader(
         filename=let.compile(filename),
@@ -279,8 +279,8 @@ def sops_layer(
     )
 
 
-def cache(getter, ttl_s=smarts.constant(60), negative_ttl_s=smarts.constant(30)):
-    return smarts.CacheGetter(
+def cache(getter, ttl_s=gtrs.constant(60), negative_ttl_s=gtrs.constant(30)):
+    return gtrs.CacheGetter(
         getter,
         ttl_s=let.compile(ttl_s),
         negative_ttl_s=let.compile(negative_ttl_s))

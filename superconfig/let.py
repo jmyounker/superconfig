@@ -8,16 +8,16 @@ keys.
 
 import config
 import helpers
-import smarts
+import gtrs
 
 
 def compile(x):
     if isinstance(x, int):
-        return smarts.constant(x)
+        return gtrs.constant(x)
     if isinstance(x, str):
         expansions = helpers.expansions(x)
         if not expansions:
-            return smarts.constant(x)
+            return gtrs.constant(x)
 
         # noinspection PyShadowingNames
         def f(context, lower_layer, x=x, expansions=expansions):
@@ -26,7 +26,7 @@ def compile(x):
     elif isinstance(x, Key):
         expansions = helpers.expansions(x.key)
         if not expansions:
-            return smarts.config_value_constant_key(x.key)
+            return gtrs.config_value_constant_key(x.key)
 
         # noinspection PyShadowingNames
         def f(context, lower_layer, key=x.key, expansions=expansions):
@@ -37,11 +37,11 @@ def compile(x):
             return resp.value
         return f
 
-    elif isinstance(x, smarts.Getter):
-        return smarts.via(x)
+    elif isinstance(x, gtrs.Getter):
+        return gtrs.via(x)
 
     else:
-        return smarts.constant(x)
+        return gtrs.constant(x)
 
 
 class Key:

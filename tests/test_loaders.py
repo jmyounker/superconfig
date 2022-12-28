@@ -8,7 +8,7 @@ from superconfig import aws
 from superconfig import builders
 from superconfig import config
 from superconfig import loaders
-from superconfig import smarts
+from superconfig import gtrs
 from superconfig import statics
 from superconfig import let
 
@@ -138,8 +138,8 @@ def test_autoload_enabled_when_true(tmp_path):
             refresh_interval_s=let.compile((check_period_s)),
             is_enabled=let.compile(let.Key("builders.file_layer.is_enabled")),
         ),
-        smarts.SmartLayer({
-            "builders.file_layer.is_enabled": smarts.Constant(True),
+        gtrs.SmartLayer({
+            "builders.file_layer.is_enabled": gtrs.Constant(True),
         }),
     ])
     assert c["a"] == 1
@@ -156,8 +156,8 @@ def test_autoload_disabled_when_false(tmp_path):
             refresh_interval_s=let.compile(check_period_s),
             is_enabled=let.compile(let.Key("builders.file_layer.is_enabled")),
         ),
-        smarts.SmartLayer({
-            "builders.file_layer.is_enabled": smarts.Constant(False),
+        gtrs.SmartLayer({
+            "builders.file_layer.is_enabled": gtrs.Constant(False),
         }),
     ])
     with pytest.raises(KeyError):
@@ -190,8 +190,8 @@ def test_autoload_filename_expansion_works(tmp_path):
             filename=let.compile(str(tmp_path / "foo-{env}.json")),
             refresh_interval_s=let.compile(check_period_s),
         ),
-        smarts.SmartLayer({
-            "env": smarts.Constant("prod"),
+        gtrs.SmartLayer({
+            "env": gtrs.Constant("prod"),
         }),
     ])
     assert c["a"] == 1

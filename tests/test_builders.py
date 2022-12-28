@@ -10,7 +10,7 @@ import pytest
 
 from superconfig import builders
 from superconfig import formats
-from superconfig import smarts
+from superconfig import gtrs
 from superconfig import statics
 
 
@@ -39,8 +39,8 @@ def test_parameterstore_layer_get_caches_before_ttl():
     c = builders.config_stack(
         builders.aws_parameter_store_layer(
             parameter_store_base_path="/base",
-            refresh_interval_s=smarts.constant(refresh_interval_s),
-            ttl_s=smarts.constant(ttl_s),
+            refresh_interval_s=gtrs.constant(refresh_interval_s),
+            ttl_s=gtrs.constant(ttl_s),
         ),
     )
     now = datetime.datetime.utcnow()
@@ -76,8 +76,8 @@ def test_parameterstore_layer_refreshes_after_ttl():
     c = builders.config_stack(
         builders.aws_parameter_store_layer(
             parameter_store_base_path="/base",
-            refresh_interval_s=smarts.constant(refresh_interval_s),
-            ttl_s=smarts.constant(ttl_s),
+            refresh_interval_s=gtrs.constant(refresh_interval_s),
+            ttl_s=gtrs.constant(ttl_s),
         ),
     )
     now = datetime.datetime.utcnow()
@@ -102,7 +102,7 @@ def test_parameterstore_layer_refreshes_after_ttl():
 
 def test_value_pulls_from_below():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value()}),
+        gtrs.SmartLayer({"a.b": builders.value()}),
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     assert c["a.b"] == "1"
@@ -119,7 +119,7 @@ def test_value_pulls_from_all_the_way_below():
 
 def test_performs_transform():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(transform=int)}),
+        gtrs.SmartLayer({"a.b": builders.value(transform=int)}),
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     assert c["a.b"] == 1
@@ -127,7 +127,7 @@ def test_performs_transform():
 
 def test_with_single_envar_pulls_from_envar(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envar="FOO")}),
+        gtrs.SmartLayer({"a.b": builders.value(envar="FOO")}),
         statics.ObjLayer({"a": {"b": "1"}}),
 
     )

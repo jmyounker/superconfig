@@ -1,9 +1,9 @@
 import getpass
 
 from superconfig import config
-from superconfig import smarts
+from superconfig import gtrs
 
-class UsernameGetter(smarts.Getter):
+class UsernameGetter(gtrs.Getter):
     @staticmethod
     def read(key, rest, context, lower_layer):
         return config.Response.found(getpass.getuser())
