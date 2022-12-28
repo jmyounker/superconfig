@@ -177,6 +177,7 @@ def value(
         v = smarts.Transform(transform, v)
     return v
 
+
 def file_layer(
     filename,  # Can be: "foo" "{oo}" GETTER Key()
     layer_constructor=None,
@@ -276,3 +277,10 @@ def sops_layer(
         refresh_interval_s=let.compile(refresh_interval_s),
         retry_interval_s=let.compile(retry_interval_s),
     )
+
+
+def cache(getter, ttl_s=smarts.constant(60), negative_ttl_s=smarts.constant(30)):
+    return smarts.CacheGetter(
+        getter,
+        ttl_s=let.compile(ttl_s),
+        negative_ttl_s=let.compile(negative_ttl_s))

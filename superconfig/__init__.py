@@ -67,7 +67,7 @@
 # DONE(jmyounker): Add envar only transform to builder.value
 # TODO(jmyounker): Add do-not-fetch-value-from-config to builder.value so it can be used for things that must be envars or defaults
 # TODO(jmyounker): Add required values
-# TODO(jmyounker): Per-getter caching
+# DONE(jmyounker): Per-getter caching
 # DONE(jmyounker): Allow parameterization of layer_constructor map
 # DONE(jmyounker): Replace is_enabled with variable mechanism
 # DONE(jmyounker): Improve names for vars and vars.compile
