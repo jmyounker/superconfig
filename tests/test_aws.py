@@ -24,7 +24,7 @@ def test_secmgr_load_single_value_string():
     c = config.layered_config(
             config.Context(),
             [
-                gtrs.SmartLayer(
+                gtrs.GetterLayer(
                     {
                         "a.b": loaders.AutoRefreshGetter(
                             layer_constructor=lambda f: config.ConstantLayer(
@@ -48,7 +48,7 @@ def test_secmgr_load_single_value_binary():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.b": loaders.AutoRefreshGetter(
                         layer_constructor=lambda f: config.ConstantLayer(f),
@@ -72,7 +72,7 @@ def test_secmgr_load_single_value_binary_base64_encoded():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.b": loaders.AutoRefreshGetter(
                         layer_constructor=lambda f: config.ConstantLayer(f),
@@ -98,7 +98,7 @@ def test_secmgr_load_from_static_name():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.b": loaders.AutoRefreshGetter(
                         layer_constructor=lambda f: config.ConstantLayer(
@@ -124,7 +124,7 @@ def test_secmgr_load_from_name_template():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.b": loaders.AutoRefreshGetter(
                         layer_constructor=lambda f: config.ConstantLayer(
@@ -135,7 +135,7 @@ def test_secmgr_load_from_name_template():
                     )
                 }
             ),
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "env": gtrs.Constant("prod"),
             }),
         ]
@@ -153,7 +153,7 @@ def test_secmgr_load_from_name_template_fails():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.b": loaders.AutoRefreshGetter(
                         layer_constructor=lambda f: config.ConstantLayer(
@@ -164,7 +164,7 @@ def test_secmgr_load_from_name_template_fails():
                     )
                 }
             ),
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "env": gtrs.Constant("prod"),
             }),
         ]
@@ -181,7 +181,7 @@ def test_parameterstore_implicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = config.Config(config.Context(), gtrs.SmartLayer({"a": builders.aws_parameter_store_getter()}))
+    c = config.Config(config.Context(), gtrs.GetterLayer({"a": builders.aws_parameter_store_getter()}))
     assert c["a.b"] == "foo"
 
 
@@ -193,7 +193,7 @@ def test_parameterstore_explicit_tree_root():
         Type="String",
         Value="foo",
     )
-    c = config.Config(config.Context(), gtrs.SmartLayer({"a": builders.aws_parameter_store_getter("/c")}))
+    c = config.Config(config.Context(), gtrs.GetterLayer({"a": builders.aws_parameter_store_getter("/c")}))
     assert c["a.b"] == "foo"
 
 
@@ -215,7 +215,7 @@ def test_parameter_store_value_handling():
         Type='SecureString',
         Value=base64.b64encode(b'3').decode('utf8'),
     )
-    c = config.Config(config.Context(), gtrs.SmartLayer({
+    c = config.Config(config.Context(), gtrs.GetterLayer({
         "a": builders.aws_parameter_store_getter(
             "/a",
             binary_decoder=converters.bytes_from_base64)}))
@@ -237,7 +237,7 @@ def test_parameterstore_path_expansion():
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer({"a": builders.aws_parameter_store_getter("/a/{env}/root")}),
+            gtrs.GetterLayer({"a": builders.aws_parameter_store_getter("/a/{env}/root")}),
             statics.ObjLayer({"env": "stage"}),
         ]
     )

@@ -15,7 +15,7 @@ import exceptions
 import helpers
 
 
-class SmartLayer(config.Layer):
+class GetterLayer(config.Layer):
     """Attache"""
     def __init__(self, getters=None):
         if getters is None:

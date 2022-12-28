@@ -138,7 +138,7 @@ def test_autoload_enabled_when_true(tmp_path):
             refresh_interval_s=let.compile((check_period_s)),
             is_enabled=let.compile(let.Key("builders.file_layer.is_enabled")),
         ),
-        gtrs.SmartLayer({
+        gtrs.GetterLayer({
             "builders.file_layer.is_enabled": gtrs.Constant(True),
         }),
     ])
@@ -156,7 +156,7 @@ def test_autoload_disabled_when_false(tmp_path):
             refresh_interval_s=let.compile(check_period_s),
             is_enabled=let.compile(let.Key("builders.file_layer.is_enabled")),
         ),
-        gtrs.SmartLayer({
+        gtrs.GetterLayer({
             "builders.file_layer.is_enabled": gtrs.Constant(False),
         }),
     ])
@@ -190,7 +190,7 @@ def test_autoload_filename_expansion_works(tmp_path):
             filename=let.compile(str(tmp_path / "foo-{env}.json")),
             refresh_interval_s=let.compile(check_period_s),
         ),
-        gtrs.SmartLayer({
+        gtrs.GetterLayer({
             "env": gtrs.Constant("prod"),
         }),
     ])

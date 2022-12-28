@@ -16,7 +16,7 @@ def config_stack(*args, context=None):
     layers = []
     for x in args:
         if isinstance(x, dict):
-            layers.append(gtrs.SmartLayer(x))
+            layers.append(gtrs.GetterLayer(x))
         else:
             layers.append(x)
     return config.layered_config(context or config.Context(), layers)

@@ -14,7 +14,7 @@ from superconfig import statics
 from superconfig import let
 
 def test_get_constant_leaf():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Constant(5)
     c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
@@ -23,7 +23,7 @@ def test_get_constant_leaf():
 
 
 def test_node_intercepts_descendants():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Constant(5)
     c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
@@ -33,7 +33,7 @@ def test_node_intercepts_descendants():
 
 
 def test_node_hides_leaf():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Constant(5)
     s["a.b.c"] = gtrs.Constant(6)
     c = config.Config(config.Context(), s)
@@ -44,7 +44,7 @@ def test_node_hides_leaf():
 
 
 def test_node_without_result_continues():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.NotFound()
     s["a.b.c"] = gtrs.Constant(6)
     c = config.Config(config.Context(), s)
@@ -52,7 +52,7 @@ def test_node_without_result_continues():
 
 
 def test_env_getter_with_missing_envar(monkeypatch):
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Env("AB")
     c = config.Config(config.Context(), s)
     monkeypatch.delenv("AB", raising=False)
@@ -61,7 +61,7 @@ def test_env_getter_with_missing_envar(monkeypatch):
 
 
 def test_env_getter_with_envar(monkeypatch):
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Env("AB")
     c = config.Config(config.Context(), s)
     monkeypatch.setenv("AB", "")
@@ -71,7 +71,7 @@ def test_env_getter_with_envar(monkeypatch):
 
 
 def test_getter_stack_empty_is_not_found():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([])
     c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
@@ -79,28 +79,28 @@ def test_getter_stack_empty_is_not_found():
 
 
 def test_getter_stack_with_one_works():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([gtrs.Constant(5)])
     c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_getter_stack_first_found_blocks():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([gtrs.Constant(5), gtrs.Constant(6)])
     c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_getter_stack_continues_if_not_found():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([gtrs.NotFound(), gtrs.Constant(6)])
     c = config.Config(config.Context(), s)
     assert c["a.b"] == 6
 
 
 def test_how_to_make_envar_with_default(monkeypatch):
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([gtrs.Env("AB"), gtrs.Constant(6)])
     c = config.Config(config.Context(), s)
     monkeypatch.setenv("AB", "foo")
@@ -110,7 +110,7 @@ def test_how_to_make_envar_with_default(monkeypatch):
 
 
 def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.GetterStack([gtrs.Env("AB"), gtrs.Stop()])
     s["a.b.c"] = gtrs.Constant(6)
     c = config.Config(config.Context(), s)
@@ -122,14 +122,14 @@ def test_how_to_make_a_fail_immediately_if_not_found(monkeypatch):
 
 
 def test_transform_on_found():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Transform(f=int, getter=gtrs.Constant("5"))
     c = config.Config(config.Context(), s)
     assert c["a.b"] == 5
 
 
 def test_transform_on_not_found_is_not_found():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Transform(f=int, getter=gtrs.NotFound())
     c = config.Config(config.Context(), s)
     with pytest.raises(KeyError):
@@ -137,7 +137,7 @@ def test_transform_on_not_found_is_not_found():
 
 
 def test_transform_failure():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
 
     class Oops(Exception):
         pass
@@ -153,7 +153,7 @@ def test_transform_failure():
 
 
 def test_ignore_transform_failure():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
 
     class Oops(Exception):
         pass
@@ -167,7 +167,7 @@ def test_ignore_transform_failure():
 
 
 def test_how_to_default_when_transform_fails():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
 
     class Oops(Exception):
         pass
@@ -187,13 +187,13 @@ def test_how_to_default_when_transform_fails():
 def test_expansion_layer():
     c = config.layered_config(config.Context(), [
             gtrs.KeyExpansionLayer(),
-            gtrs.SmartLayer(
+            gtrs.GetterLayer(
                 {
                     "a.foo.bar.foo.b": gtrs.Constant(1),
                     "a.foo.baz.foo.b": gtrs.Constant(2),
                 },
             ),
-            gtrs.SmartLayer({}),
+            gtrs.GetterLayer({}),
             statics.ObjLayer({"f": "foo", "g": "bar", "h": {"i": "baz"}}),
         ]
     )
@@ -207,7 +207,7 @@ def test_expansion_layer():
 
 def test_graft():
     c = config.layered_config(config.Context(), [
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "a": gtrs.Graft(statics.ObjLayer({"b": 1, "c": 2})),
                 "a.b.d": gtrs.Constant(4)
             }),
@@ -225,7 +225,7 @@ def test_cache_caches_records():
     with freezegun.freeze_time():
         c = config.layered_config(config.Context(), [
             gtrs.CacheLayer(ttl_s=gtrs.constant(ttl_s)),
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "a": gtrs.Counter(0),
             })
         ])
@@ -238,7 +238,7 @@ def test_cache_flushes_after_timeout():
     with freezegun.freeze_time():
         c = config.layered_config(config.Context(), [
             gtrs.CacheLayer(ttl_s=gtrs.constant(timeout_s)),
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "a": gtrs.Counter(0),
             })
         ])
@@ -259,7 +259,7 @@ def test_cache_records_have_distinct_expirations():
     ]
     c = config.layered_config(config.Context(), [
         gtrs.CacheLayer(ttl_s=gtrs.constant(ttl_s)),
-        gtrs.SmartLayer({
+        gtrs.GetterLayer({
             "a": gtrs.Counter(0),
             "b": gtrs.Counter(10),
         })
@@ -272,7 +272,7 @@ def test_cache_records_have_distinct_expirations():
 
 
 def test_key_expansion_layer():
-    s = gtrs.SmartLayer()
+    s = gtrs.GetterLayer()
     s["a.b"] = gtrs.Constant(5)
     c = config.layered_config(
         config.Context(),
@@ -314,7 +314,7 @@ def test_smart_layer_root_getter(tmp_path):
     c = config.layered_config(
         config.Context(),
         [
-            gtrs.SmartLayer({
+            gtrs.GetterLayer({
                 "": loaders.AutoRefreshGetter(
                     layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_json(converters.string_from_bytes(x))),
                     fetcher=loaders.FileFetcher(let.compile(str(f))),
@@ -348,6 +348,6 @@ def test_matched_pattern_getters():
     for getters, key, expected_value in test_cases:
         c = config.layered_config(
             config.Context(),
-            [gtrs.SmartLayer(getters)],
+            [gtrs.GetterLayer(getters)],
         )
         assert is_expected_getitem(c, key, expected_value)

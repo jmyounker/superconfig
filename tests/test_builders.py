@@ -102,7 +102,7 @@ def test_parameterstore_layer_refreshes_after_ttl():
 
 def test_value_pulls_from_below():
     c = builders.config_stack(
-        gtrs.SmartLayer({"a.b": builders.value()}),
+        gtrs.GetterLayer({"a.b": builders.value()}),
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     assert c["a.b"] == "1"
@@ -119,7 +119,7 @@ def test_value_pulls_from_all_the_way_below():
 
 def test_performs_transform():
     c = builders.config_stack(
-        gtrs.SmartLayer({"a.b": builders.value(transform=int)}),
+        gtrs.GetterLayer({"a.b": builders.value(transform=int)}),
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     assert c["a.b"] == 1
@@ -127,7 +127,7 @@ def test_performs_transform():
 
 def test_with_single_envar_pulls_from_envar(monkeypatch):
     c = builders.config_stack(
-        gtrs.SmartLayer({"a.b": builders.value(envar="FOO")}),
+        gtrs.GetterLayer({"a.b": builders.value(envar="FOO")}),
         statics.ObjLayer({"a": {"b": "1"}}),
 
     )
