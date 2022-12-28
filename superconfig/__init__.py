@@ -76,6 +76,10 @@
 # DONE(jmyounker): Fix damn circular imports
 # TODO(jmyounker): Add pure function getters
 # DONE(jmyounker): Automagic value getter expansion
+# TODO(jmyounker): Add readme
+# TODO(jmyounker): Readme concepts section
+# TODO(jmyounker): Readme examples
+
 
 # post-release/someday
 # TODO(jmyounker): Etcd value getter
