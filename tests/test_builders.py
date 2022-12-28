@@ -110,7 +110,7 @@ def test_value_pulls_from_below():
 
 def test_value_pulls_from_all_the_way_below():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value()}),
+        {"a.b": builders.value()},
         statics.ObjLayer({}),
         statics.ObjLayer({"a": {"b": "1"}}),
     )
@@ -137,7 +137,7 @@ def test_with_single_envar_pulls_from_envar(monkeypatch):
 
 def test_with_single_envar_pulls_from_below_if_envar_missing(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envar="FOO")}),
+        {"a.b": builders.value(envar="FOO")},
         statics.ObjLayer({"a": {"b": "1"}}),
 
     )
@@ -146,7 +146,7 @@ def test_with_single_envar_pulls_from_below_if_envar_missing(monkeypatch):
 
 def test_with_multi_envars_finds_first_one(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envars=["FOO", "BAR"])}),
+        {"a.b": builders.value(envars=["FOO", "BAR"])},
         statics.ObjLayer({"a": {"b": "1"}}),
 
     )
@@ -157,9 +157,8 @@ def test_with_multi_envars_finds_first_one(monkeypatch):
 
 def test_with_multi_envars_moves_to_second_if_first_missing(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envars=["FOO", "BAR"])}),
+        {"a.b": builders.value(envars=["FOO", "BAR"])},
         statics.ObjLayer({"a": {"b": "1"}}),
-
     )
     monkeypatch.delenv("FOO", raising=False)
     monkeypatch.setenv("BAR", "3")
@@ -168,7 +167,7 @@ def test_with_multi_envars_moves_to_second_if_first_missing(monkeypatch):
 
 def test_with_envar_and_envars_foo_stacks_first(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envar="FOO", envars=["BAR"])}),
+        {"a.b": builders.value(envar="FOO", envars=["BAR"])},
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     monkeypatch.setenv("FOO", "2")
@@ -178,7 +177,7 @@ def test_with_envar_and_envars_foo_stacks_first(monkeypatch):
 
 def test_with_envar_and_envars_list_stacks_afterwards(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envar="FOO", envars=["BAR"])}),
+        {"a.b": builders.value(envar="FOO", envars=["BAR"])},
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     monkeypatch.delenv("FOO", raising=False)
@@ -188,7 +187,7 @@ def test_with_envar_and_envars_list_stacks_afterwards(monkeypatch):
 
 def test_transform_affects_envars(monkeypatch):
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(envar="FOO", envars=["BAR"], transform=int)}),
+        {"a.b": builders.value(envar="FOO", envars=["BAR"], transform=int)},
         statics.ObjLayer({"a": {"b": "1"}}),
     )
     monkeypatch.setenv("FOO", "2")
@@ -198,7 +197,7 @@ def test_transform_affects_envars(monkeypatch):
 
 def test_missing_value_raises_key_error_with_transform():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(transform=int)}),
+        {"a.b": builders.value(transform=int)},
     )
     with pytest.raises(KeyError):
         _ = c["a.b"]
@@ -229,7 +228,7 @@ def test_default_and_stop_are_incompatible():
 
 def test_missing_value_raises_key_error_without_transform_too():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value()}),
+        {"a.b": builders.value()},
     )
     with pytest.raises(KeyError):
         _ = c["a.b"]
@@ -237,14 +236,14 @@ def test_missing_value_raises_key_error_without_transform_too():
 
 def test_with_default():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(default="1")}),
+        {"a.b": builders.value(default="1")},
     )
     assert c["a.b"] == "1"
 
 
 def test_default_passes_through_transform():
     c = builders.config_stack(
-        smarts.SmartLayer({"a.b": builders.value(default="1", transform=int)}),
+        {"a.b": builders.value(default="1", transform=int)},
     )
     assert c["a.b"] == 1
 
