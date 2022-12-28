@@ -9,7 +9,7 @@ import loaders
 import misc
 import smarts
 import statics
-import vars
+import let
 
 
 def config_stack(*args, context=None):
@@ -37,7 +37,7 @@ def aws_parameter_store_layer(
             retry_interval_s=retry_interval_s,
             ttl_s=ttl_s,
             negative_ttl_s=negative_ttl_s,
-            is_enabled=None if is_enabled is None else vars.compile(is_enabled),
+            is_enabled=None if is_enabled is None else let.compile(is_enabled),
         )
     )
 
@@ -60,7 +60,7 @@ def aws_parameter_store_getter(
             ),
             refresh_interval_s=refresh_interval_s,
             retry_interval_s=retry_interval_s,
-            is_enabled=None if is_enabled is None else vars.compile(is_enabled),
+            is_enabled=None if is_enabled is None else let.compile(is_enabled),
         ),
         ttl_s=ttl_s,
         negative_ttl_s=negative_ttl_s,
@@ -185,11 +185,11 @@ def file_layer(
     retry_interval_s=10,
 ):
     return FileLayerLoader(
-        filename=vars.compile(filename),
+        filename=let.compile(filename),
         layer_constructor=layer_constructor,
-        is_enabled=None if is_enabled is None else vars.compile(is_enabled),
-        refresh_interval_s=vars.compile(refresh_interval_s),
-        retry_interval_s=vars.compile(retry_interval_s),
+        is_enabled=None if is_enabled is None else let.compile(is_enabled),
+        refresh_interval_s=let.compile(refresh_interval_s),
+        retry_interval_s=let.compile(retry_interval_s),
     )
 
 
@@ -246,7 +246,7 @@ def aws_secretsmanager_getter(
     return loaders.AutoRefreshGetter(
         layer_constructor=layer_constructor,
         fetcher=aws.SecretsManagerFetcher(
-            name=None if name is None else vars.compile(name),
+            name=None if name is None else let.compile(name),
             stage=stage,
             binary_decoder=binary_decoder,
         )
@@ -269,10 +269,10 @@ def sops_layer(
     retry_interval_s=smarts.constant(5),
 ):
     return FileLayerLoader(
-        filename=vars.compile(filename),
+        filename=let.compile(filename),
         reader=lambda x, sops_args=sops_args: loaders.sops_reader(x, sops_args),
         layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_yaml(x)),
-        is_enabled=None if is_enabled is None else vars.compile(is_enabled),
-        refresh_interval_s=vars.compile(refresh_interval_s),
-        retry_interval_s=vars.compile(retry_interval_s),
+        is_enabled=None if is_enabled is None else let.compile(is_enabled),
+        refresh_interval_s=let.compile(refresh_interval_s),
+        retry_interval_s=let.compile(retry_interval_s),
     )

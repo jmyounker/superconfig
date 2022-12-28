@@ -11,7 +11,7 @@ from superconfig import converters
 from superconfig import loaders
 from superconfig import smarts
 from superconfig import statics
-from superconfig import vars
+from superconfig import let
 
 
 @moto.mock_secretsmanager
@@ -104,7 +104,7 @@ def test_secmgr_load_from_static_name():
                         layer_constructor=lambda f: config.ConstantLayer(
                             converters.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
-                            name=vars.compile("c.d")
+                            name=let.compile("c.d")
                         ),
                     )
                 }
@@ -130,7 +130,7 @@ def test_secmgr_load_from_name_template():
                         layer_constructor=lambda f: config.ConstantLayer(
                             converters.string_from_bytes(f)),
                         fetcher=aws.SecretsManagerFetcher(
-                            name=vars.compile("c-{env}")
+                            name=let.compile("c-{env}")
                         ),
                     )
                 }

@@ -70,7 +70,7 @@
 # TODO(jmyounker): Per-getter caching
 # DONE(jmyounker): Allow parameterization of layer_constructor map
 # DONE(jmyounker): Replace is_enabled with variable mechanism
-# TODO(jmyounker): Improve names for vars and vars.compile
+# DONE(jmyounker): Improve names for vars and vars.compile
 # TODO(jmyounker): Add auto-naming to layer construction
 # TODO(jmyounker): Simplify smart layer construction in builder tests
 # DONE(jmyounker): Fix damn circular imports

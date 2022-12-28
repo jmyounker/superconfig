@@ -11,7 +11,7 @@ from superconfig import builders
 from superconfig import loaders
 from superconfig import smarts
 from superconfig import statics
-from superconfig import vars
+from superconfig import let
 
 def test_get_constant_leaf():
     s = smarts.SmartLayer()
@@ -299,7 +299,7 @@ def test_getter_to_layer_adapter(tmp_path):
             smarts.GetterAsLayer(
                 loaders.AutoRefreshGetter(
                     layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_json(converters.string_from_bytes(x))),
-                    fetcher=loaders.FileFetcher(vars.compile(str(f))),
+                    fetcher=loaders.FileFetcher(let.compile(str(f))),
                 ),
             ),
         ]
@@ -317,7 +317,7 @@ def test_smart_layer_root_getter(tmp_path):
             smarts.SmartLayer({
                 "": loaders.AutoRefreshGetter(
                     layer_constructor=lambda x: statics.ObjLayer(converters.obj_from_json(converters.string_from_bytes(x))),
-                    fetcher=loaders.FileFetcher(vars.compile(str(f))),
+                    fetcher=loaders.FileFetcher(let.compile(str(f))),
                 ),
             }),
         ]
