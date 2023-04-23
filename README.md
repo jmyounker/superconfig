@@ -34,7 +34,7 @@ This file contains:
 To use this you would create the following config:
 
 
-```json
+```python
 from superconfig import builders as bld
 
 config = bld.config_stack(
