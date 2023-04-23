@@ -2,10 +2,10 @@ import contextlib
 
 import boto3
 
-import config
-import exceptions
-import helpers
-import loaders
+from superconfig import config
+from superconfig import exceptions
+from superconfig import helpers
+from superconfig import loaders
 
 
 class AwsParameterStoreFetcher(loaders.AbstractFetcher):

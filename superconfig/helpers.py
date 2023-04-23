@@ -2,7 +2,7 @@ import re
 from typing import AnyStr
 from typing import Optional
 
-import config
+from superconfig import config
 
 
 class ExpandableString:

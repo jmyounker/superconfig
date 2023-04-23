@@ -10,9 +10,9 @@ from typing import Iterable
 from typing import Optional
 from typing import Tuple
 
-import config
-import exceptions
-import helpers
+from superconfig import config
+from superconfig import exceptions
+from superconfig import helpers
 
 
 class GetterLayer(config.Layer):
@@ -391,4 +391,5 @@ class FullKeyGetter():
 
     def read(self, key: AnyStr, rest: list[AnyStr], context: config.Context, lower_layer: config.Layer) -> config.Response:
         return self.getter.read(full_key(key, rest), [], context, lower_layer)
+
 

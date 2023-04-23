@@ -5,9 +5,9 @@ import time
 import threading
 from subprocess import Popen
 
-import config
-import exceptions
-import gtrs
+from superconfig import config
+from superconfig import exceptions
+from superconfig import gtrs
 
 
 class AtomicRef:

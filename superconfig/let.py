@@ -6,9 +6,9 @@ keys.
 
 """
 
-import config
-import helpers
-import gtrs
+from superconfig import config
+from superconfig import helpers
+from superconfig import gtrs
 
 
 def compile(x):

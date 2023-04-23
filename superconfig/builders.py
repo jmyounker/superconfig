@@ -1,15 +1,15 @@
 """The high level interface for building config trees."""
 from typing import Tuple, Any
 
-import aws
-import converters
-import formats
-import config
-import loaders
-import misc
-import gtrs
-import statics
-import let
+from superconfig import aws
+from superconfig import converters
+from superconfig import formats
+from superconfig import config
+from superconfig import loaders
+from superconfig import misc
+from superconfig import gtrs
+from superconfig import statics
+from superconfig import let
 
 
 def config_stack(*args, context=None):
@@ -262,6 +262,10 @@ def username():
     return misc.UsernameGetter()
 
 
+def homedir():
+    return misc.HomedDirGetter()
+
+
 def sops_layer(
     filename,
     sops_args=None,
@@ -284,3 +288,4 @@ def cache(getter, ttl_s=gtrs.constant(60), negative_ttl_s=gtrs.constant(30)):
         getter,
         ttl_s=let.compile(ttl_s),
         negative_ttl_s=let.compile(negative_ttl_s))
+

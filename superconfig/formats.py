@@ -4,8 +4,8 @@ from typing import List
 
 import aenum
 
-import converters
-import statics
+from superconfig import converters
+from superconfig import statics
 
 
 @aenum.unique

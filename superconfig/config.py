@@ -6,7 +6,7 @@ from typing import AnyStr
 from typing import NamedTuple
 from typing import Optional
 
-import exceptions
+from superconfig import exceptions
 
 
 class Response(NamedTuple):
